@@ -14,19 +14,7 @@ import {
   Legend,
 } from "recharts"
 
-const allData = [
-  { date: "Jan 1", total: 42, resolved: 30, unresolved: 12 },
-  { date: "Jan 8", total: 38, resolved: 25, unresolved: 13 },
-  { date: "Jan 15", total: 55, resolved: 40, unresolved: 15 },
-  { date: "Jan 22", total: 47, resolved: 32, unresolved: 15 },
-  { date: "Jan 29", total: 62, resolved: 44, unresolved: 18 },
-  { date: "Feb 5", total: 58, resolved: 41, unresolved: 17 },
-  { date: "Feb 12", total: 74, resolved: 55, unresolved: 19 },
-  { date: "Feb 19", total: 68, resolved: 50, unresolved: 18 },
-  { date: "Feb 26", total: 81, resolved: 60, unresolved: 21 },
-  { date: "Mar 4", total: 76, resolved: 57, unresolved: 19 },
-  { date: "Mar 10", total: 89, resolved: 65, unresolved: 24 },
-]
+const allData: any[] = [];
 
 type FilterKey = "all" | "resolved" | "unresolved"
 

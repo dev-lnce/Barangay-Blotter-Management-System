@@ -12,14 +12,7 @@ import {
   Cell,
 } from "recharts"
 
-const incidentTypes = [
-  { type: "Theft", count: 214 },
-  { type: "Noise", count: 183 },
-  { type: "Vandalism", count: 97 },
-  { type: "Assault", count: 76 },
-  { type: "Trespassing", count: 54 },
-  { type: "Others", count: 42 },
-]
+const incidentTypes: any[] = [];
 
 const COLORS = [
   "var(--color-chart-1)",

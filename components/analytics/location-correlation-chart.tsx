@@ -18,15 +18,7 @@ import {
   Cell,
 } from "recharts"
 
-const locationData = [
-  { zone: "Zone 1 – Apartment Complex", incidents: 78, severity: "high" },
-  { zone: "Zone 3 – Purok Sampaguita", incidents: 64, severity: "high" },
-  { zone: "Zone 5 – Market Area", incidents: 52, severity: "medium" },
-  { zone: "Zone 2 – Residential Row Houses", incidents: 41, severity: "medium" },
-  { zone: "Zone 4 – Commercial Strip", incidents: 35, severity: "low" },
-  { zone: "Zone 6 – School Vicinity", incidents: 28, severity: "low" },
-  { zone: "Zone 7 – Barangay Hall Area", incidents: 18, severity: "low" },
-]
+const locationData: any[] = [];
 
 const severityColors: Record<string, string> = {
   high: "var(--color-chart-5)",

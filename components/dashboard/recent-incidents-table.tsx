@@ -10,15 +10,7 @@ import {
 } from "@/components/ui/table"
 import { cn } from "@/lib/utils"
 
-const incidents = [
-  { id: "BLT-20240310-001", date: "Mar 10, 2026", category: "Theft", severity: "High", status: "Unresolved" },
-  { id: "BLT-20240309-047", date: "Mar 9, 2026", category: "Noise Complaint", severity: "Low", status: "Resolved" },
-  { id: "BLT-20240309-046", date: "Mar 9, 2026", category: "Assault", severity: "High", status: "Unresolved" },
-  { id: "BLT-20240308-038", date: "Mar 8, 2026", category: "Vandalism", severity: "Medium", status: "Resolved" },
-  { id: "BLT-20240307-031", date: "Mar 7, 2026", category: "Trespassing", severity: "Medium", status: "Resolved" },
-  { id: "BLT-20240306-024", date: "Mar 6, 2026", category: "Theft", severity: "High", status: "Unresolved" },
-  { id: "BLT-20240305-019", date: "Mar 5, 2026", category: "Noise Complaint", severity: "Low", status: "Resolved" },
-]
+const incidents: any[] = [];
 
 function SeverityBadge({ severity }: { severity: string }) {
   return (

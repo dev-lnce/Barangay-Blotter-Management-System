@@ -2,48 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { FileText, CheckCircle2, AlertTriangle, MapPin, TrendingUp, TrendingDown } from "lucide-react"
 import { cn } from "@/lib/utils"
 
-const kpiData = [
-  {
-    title: "Total Reports",
-    value: "1,284",
-    trend: "+12%",
-    trendDir: "up",
-    trendLabel: "from last month",
-    icon: FileText,
-    iconBg: "bg-primary/10",
-    iconColor: "text-primary",
-  },
-  {
-    title: "Resolution Rate",
-    value: "73.4%",
-    trend: "+5.2%",
-    trendDir: "up",
-    trendLabel: "improvement",
-    icon: CheckCircle2,
-    iconBg: "bg-green-50",
-    iconColor: "text-green-600",
-  },
-  {
-    title: "Most Common Severity",
-    value: "High Risk",
-    trend: "38 active cases",
-    trendDir: "neutral",
-    trendLabel: "currently open",
-    icon: AlertTriangle,
-    iconBg: "bg-red-50",
-    iconColor: "text-red-500",
-  },
-  {
-    title: "Most Affected Area",
-    value: "Purok 3",
-    trend: "Mabini St.",
-    trendDir: "neutral",
-    trendLabel: "highest concentration",
-    icon: MapPin,
-    iconBg: "bg-amber-50",
-    iconColor: "text-amber-500",
-  },
-]
+const kpiData: any[] = [];
 
 export function KpiCards() {
   return (

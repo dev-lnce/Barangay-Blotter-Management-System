@@ -18,28 +18,9 @@ import {
   Legend,
 } from "recharts"
 
-const monthlyData = [
-  { month: "Jan", theft: 18, noise: 12, vandalism: 8, assault: 5, trespassing: 4 },
-  { month: "Feb", theft: 22, noise: 15, vandalism: 6, assault: 7, trespassing: 3 },
-  { month: "Mar", theft: 25, noise: 18, vandalism: 10, assault: 4, trespassing: 6 },
-  { month: "Apr", theft: 19, noise: 14, vandalism: 7, assault: 8, trespassing: 5 },
-  { month: "May", theft: 28, noise: 20, vandalism: 12, assault: 6, trespassing: 4 },
-  { month: "Jun", theft: 32, noise: 22, vandalism: 9, assault: 9, trespassing: 7 },
-  { month: "Jul", theft: 35, noise: 25, vandalism: 14, assault: 7, trespassing: 5 },
-  { month: "Aug", theft: 30, noise: 19, vandalism: 11, assault: 10, trespassing: 6 },
-  { month: "Sep", theft: 24, noise: 16, vandalism: 8, assault: 6, trespassing: 4 },
-  { month: "Oct", theft: 21, noise: 13, vandalism: 6, assault: 5, trespassing: 3 },
-  { month: "Nov", theft: 26, noise: 17, vandalism: 9, assault: 7, trespassing: 5 },
-  { month: "Dec", theft: 29, noise: 21, vandalism: 13, assault: 8, trespassing: 6 },
-]
+const monthlyData: any[] = [];
 
-const categories = [
-  { key: "theft", label: "Theft", color: "var(--color-chart-1)" },
-  { key: "noise", label: "Noise Disturbance", color: "var(--color-chart-2)" },
-  { key: "vandalism", label: "Vandalism", color: "var(--color-chart-3)" },
-  { key: "assault", label: "Assault", color: "var(--color-chart-5)" },
-  { key: "trespassing", label: "Trespassing", color: "var(--color-chart-4)" },
-]
+const categories: any[] = [];
 
 export function MonthlyTrendsChart() {
   return (

@@ -18,17 +18,12 @@ import {
   ReferenceLine,
 } from "recharts"
 
-const durationData = [
-  { month: "Oct", avgDays: 8.2 },
-  { month: "Nov", avgDays: 7.5 },
-  { month: "Dec", avgDays: 9.1 },
-  { month: "Jan", avgDays: 6.8 },
-  { month: "Feb", avgDays: 5.9 },
-  { month: "Mar", avgDays: 5.2 },
-]
+const durationData: any[] = [];
 
 export function ResolutionDurationChart() {
-  const avgOverall = durationData.reduce((sum, d) => sum + d.avgDays, 0) / durationData.length
+  const avgOverall = durationData.length > 0 
+  ? durationData.reduce((sum, d) => sum + d.avgDays, 0) / durationData.length 
+  : 0;
 
   return (
     <Card className="shadow-sm border-border h-full">
@@ -99,12 +94,6 @@ export function ResolutionDurationChart() {
         <div className="mt-3 flex items-center justify-between border-t border-border pt-3">
           <div className="text-xs text-muted-foreground font-sans">
             <span className="font-medium text-foreground">Trend:</span> Improving
-          </div>
-          <div className="flex items-center gap-1.5 text-xs font-medium text-green-600 font-sans">
-            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M5 10l7-7m0 0l7 7m-7-7v18" />
-            </svg>
-            36% faster than Q3
           </div>
         </div>
       </CardContent>

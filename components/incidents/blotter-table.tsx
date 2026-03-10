@@ -30,73 +30,7 @@ import {
 } from "@/components/ui/select"
 import { NewBlotterSheet } from "./new-blotter-sheet"
 
-// Mock data
-const blotterRecords = [
-  {
-    id: "BLT-2026-0147",
-    dateReported: "2026-03-09",
-    complainant: "Maria Santos",
-    incidentType: "Physical Assault",
-    location: "Zone 3, Purok Sampaguita",
-    status: "Open",
-  },
-  {
-    id: "BLT-2026-0146",
-    dateReported: "2026-03-08",
-    complainant: "Jose Reyes",
-    incidentType: "Property Damage",
-    location: "Zone 1, Purok Ilang-Ilang",
-    status: "Investigating",
-  },
-  {
-    id: "BLT-2026-0145",
-    dateReported: "2026-03-07",
-    complainant: "Ana Garcia",
-    incidentType: "Theft",
-    location: "Zone 5, Purok Rosal",
-    status: "Resolved",
-  },
-  {
-    id: "BLT-2026-0144",
-    dateReported: "2026-03-06",
-    complainant: "Pedro Cruz",
-    incidentType: "Noise Disturbance",
-    location: "Zone 2, Purok Gumamela",
-    status: "Resolved",
-  },
-  {
-    id: "BLT-2026-0143",
-    dateReported: "2026-03-05",
-    complainant: "Elena Bautista",
-    incidentType: "Verbal Abuse",
-    location: "Zone 4, Purok Dahlia",
-    status: "Investigating",
-  },
-  {
-    id: "BLT-2026-0142",
-    dateReported: "2026-03-04",
-    complainant: "Ricardo Mendoza",
-    incidentType: "Physical Assault",
-    location: "Zone 3, Purok Sampaguita",
-    status: "Open",
-  },
-  {
-    id: "BLT-2026-0141",
-    dateReported: "2026-03-03",
-    complainant: "Sofia Villareal",
-    incidentType: "Trespassing",
-    location: "Zone 1, Purok Ilang-Ilang",
-    status: "Resolved",
-  },
-  {
-    id: "BLT-2026-0140",
-    dateReported: "2026-03-02",
-    complainant: "Miguel Torres",
-    incidentType: "Theft",
-    location: "Zone 6, Purok Camia",
-    status: "Investigating",
-  },
-]
+const blotterRecords: any[] = [];
 
 const incidentTypes = [
   "All Types",

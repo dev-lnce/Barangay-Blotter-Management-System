@@ -9,11 +9,7 @@ import {
 } from "@/components/ui/card"
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts"
 
-const statusData = [
-  { name: "Amicably Settled", value: 312, color: "var(--color-chart-3)" },
-  { name: "Escalated to Police", value: 87, color: "var(--color-chart-5)" },
-  { name: "Dismissed", value: 45, color: "var(--color-muted-foreground)" },
-]
+const statusData: any[] = [];
 
 const total = statusData.reduce((sum, d) => sum + d.value, 0)
 

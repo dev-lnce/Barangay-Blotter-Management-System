@@ -29,49 +29,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { AddOfficialDialog } from "./add-official-dialog"
 
-// Mock data for users
-const systemUsers = [
-  {
-    id: "USR-001",
-    name: "Hon. Ricardo P. Santos",
-    role: "Brgy. Captain",
-    email: "captain.santos@brgybanaybanay.gov.ph",
-    lastActive: "2026-03-10T14:32:00",
-    status: "Active",
-  },
-  {
-    id: "USR-002",
-    name: "Maria Elena Cruz",
-    role: "Secretary",
-    email: "secretary.cruz@brgybanaybanay.gov.ph",
-    lastActive: "2026-03-10T09:15:00",
-    status: "Active",
-  },
-  {
-    id: "USR-003",
-    name: "Jose Antonio Reyes",
-    role: "Desk Officer",
-    email: "officer.reyes@brgybanaybanay.gov.ph",
-    lastActive: "2026-03-09T16:45:00",
-    status: "Active",
-  },
-  {
-    id: "USR-004",
-    name: "Ana Patricia Bautista",
-    role: "Desk Officer",
-    email: "officer.bautista@brgybanaybanay.gov.ph",
-    lastActive: "2026-03-08T11:20:00",
-    status: "Active",
-  },
-  {
-    id: "USR-005",
-    name: "Pedro Miguel Torres",
-    role: "Desk Officer",
-    email: "officer.torres@brgybanaybanay.gov.ph",
-    lastActive: "2026-03-05T08:00:00",
-    status: "Inactive",
-  },
-]
+const systemUsers: any[] = []; 
 
 function getRoleBadge(role: string) {
   switch (role) {
@@ -195,7 +153,7 @@ export function UsersTable() {
                           <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold text-sm">
                             {user.name
                               .split(" ")
-                              .map((n) => n[0])
+                              .map((n: any[]) => n[0])
                               .slice(0, 2)
                               .join("")}
                           </div>
