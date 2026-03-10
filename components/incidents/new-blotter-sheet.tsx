@@ -9,6 +9,7 @@ import {
   ImageIcon,
   ExternalLink,
 } from "lucide-react"
+import { supabase } from '@/lib/supabase'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -34,6 +35,7 @@ import { cn } from "@/lib/utils"
 interface NewBlotterSheetProps {
   open: boolean
   onOpenChange: (open: boolean) => void
+  onSuccess?: () => void 
 }
 
 const zones = [
@@ -57,11 +59,16 @@ const incidentTypes = [
   "Other",
 ]
 
-export function NewBlotterSheet({ open, onOpenChange }: NewBlotterSheetProps) {
+export function NewBlotterSheet({ open, onOpenChange, onSuccess }: NewBlotterSheetProps) {
   const [location, setLocation] = useState("")
   const [narrative, setNarrative] = useState("")
   const [files, setFiles] = useState<File[]>([])
   const [isDragOver, setIsDragOver] = useState(false)
+  
+  // NEW STATE VARIABLES
+  const [complainantName, setComplainantName] = useState("")
+  const [incidentType, setIncidentType] = useState("")
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   // Simulate duplicate detection based on location
   const showDuplicateWarning =
@@ -85,11 +92,56 @@ export function NewBlotterSheet({ open, onOpenChange }: NewBlotterSheetProps) {
     setFiles((prev) => prev.filter((_, i) => i !== index))
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // Handle form submission
-    onOpenChange(false)
+    setIsSubmitting(true)
+
+const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    console.log("1. Button clicked, starting submission...")
+    setIsSubmitting(true)
+
+    try {
+      console.log("2. Sending data to Supabase...", { 
+        complainantName, 
+        incidentType, 
+        location, 
+        narrative 
+      })
+
+      const { data, error } = await supabase
+        .from('blotter_records')
+        .insert([
+          {
+            complainant_name: complainantName,
+            incident_type: incidentType,
+            location: location,
+            narrative: narrative,
+            status: 'Open'
+          }
+        ])
+        .select()
+
+      console.log("3. Supabase responded!", { data, error })
+
+      if (error) throw error
+
+      console.log("4. Success! Closing sheet...")
+      setComplainantName("")
+      setIncidentType("")
+      setLocation("")
+      setNarrative("")
+      onOpenChange(false)
+      if (onSuccess) onSuccess()
+      
+    } catch (error: any) {
+      console.error("❌ Error caught:", error.message || error)
+    } finally {
+      console.log("5. Finally block reached, resetting button.")
+      setIsSubmitting(false)
+    }
   }
+}
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -121,6 +173,8 @@ export function NewBlotterSheet({ open, onOpenChange }: NewBlotterSheetProps) {
                   id="complainant-name"
                   placeholder="e.g., Juan Dela Cruz"
                   className="bg-muted/50"
+                  value={complainantName}
+                  onChange={(e) => setComplainantName(e.target.value)}
                 />
               </div>
               <div className="space-y-2">
@@ -225,7 +279,7 @@ export function NewBlotterSheet({ open, onOpenChange }: NewBlotterSheetProps) {
                 <Label htmlFor="incident-type" className="text-sm font-medium">
                   Incident Type
                 </Label>
-                <Select>
+                <Select value={incidentType} onValueChange={setIncidentType}>
                   <SelectTrigger id="incident-type" className="bg-muted/50">
                     <SelectValue placeholder="Select type" />
                   </SelectTrigger>
@@ -399,8 +453,12 @@ export function NewBlotterSheet({ open, onOpenChange }: NewBlotterSheetProps) {
             >
               Cancel
             </Button>
-            <Button type="submit" className="bg-primary text-primary-foreground hover:bg-primary/90">
-              Submit Record
+            <Button 
+              type="submit" 
+              className="bg-primary text-primary-foreground hover:bg-primary/90"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "Saving..." : "Submit Record"}
             </Button>
           </div>
         </form>

@@ -77,10 +77,14 @@ export function BlotterTable() {
   const [statusFilter, setStatusFilter] = useState("All Statuses")
   const [typeFilter, setTypeFilter] = useState("All Types")
   const [sheetOpen, setSheetOpen] = useState(false)
+  
+  // NEW: Add a trigger state to re-fetch data
+  const [refreshTrigger, setRefreshTrigger] = useState(0)
 
-  // 2. ADD THE USE EFFECT HOOK TO FETCH SUPABASE DATA
+// 2. ADD THE USE EFFECT HOOK TO FETCH SUPABASE DATA
   useEffect(() => {
     async function fetchRecords() {
+      setIsLoading(true); // Ensure loading state is true on refresh
       try {
         const { data, error } = await supabase
           .from('blotter_records')
@@ -93,15 +97,23 @@ export function BlotterTable() {
         }
 
         if (data) {
-          // Map the database snake_case names to match your UI's camelCase expectations
-          const formattedData = data.map((record) => ({
-            id: record.id.toString(), 
-            dateReported: record.created_at,
-            complainant: record.complainant_name || 'Unknown',
-            incidentType: record.incident_type || 'Unspecified',
-            location: record.location || 'N/A',
-            status: record.status || 'Open'
-          }));
+          const formattedData = data.map((record) => {
+            // Get the year from the created_at date
+            const recordYear = new Date(record.created_at).getFullYear();
+            
+            // Format ID to look like BLT-2026-0001
+            // padStart(4, '0') adds leading zeros to the number
+            const formattedId = `BLT-${recordYear}-${record.id.toString().padStart(4, '0')}`;
+
+            return {
+              id: formattedId, 
+              dateReported: record.created_at,
+              complainant: record.complainant_name || 'Unknown',
+              incidentType: record.incident_type || 'Unspecified',
+              location: record.location || 'N/A',
+              status: record.status || 'Open'
+            }
+          });
           
           setBlotterRecords(formattedData);
         }
@@ -113,7 +125,7 @@ export function BlotterTable() {
     }
 
     fetchRecords();
-  }, []); // Empty array means this runs once when the component mounts
+  }, [refreshTrigger]); // DEPENDENCY ADDED: Runs when refreshTrigger changes
 
   const filteredRecords = blotterRecords.filter((record) => {
     const matchesSearch =
@@ -288,8 +300,12 @@ export function BlotterTable() {
         </CardContent>
       </Card>
 
-      {/* Make sure to pass a way to refresh records to your form so the table updates when a new record is saved! */}
-      <NewBlotterSheet open={sheetOpen} onOpenChange={setSheetOpen} />
+      {/* Pass the refresh function so the table updates when a new record is saved! */}
+      <NewBlotterSheet 
+        open={sheetOpen} 
+        onOpenChange={setSheetOpen} 
+        onSuccess={() => setRefreshTrigger(prev => prev + 1)} 
+      />
     </>
   )
 }
