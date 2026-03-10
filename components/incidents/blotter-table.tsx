@@ -2,11 +2,18 @@
 
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Search, Filter, Plus, MoreHorizontal, Eye, Pencil, RefreshCw } from "lucide-react"
+import { Search, Filter, Plus, MoreHorizontal, Eye, Pencil, RefreshCw, Trash2 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet"
 import {
   Table,
   TableBody,
@@ -30,6 +37,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { NewBlotterSheet } from "./new-blotter-sheet"
+import { EditBlotterSheet } from "./edit-blotter-sheet"
 
 const incidentTypes = [
   "All Types",
@@ -80,6 +88,12 @@ export function BlotterTable() {
   
   // NEW: Add a trigger state to re-fetch data
   const [refreshTrigger, setRefreshTrigger] = useState(0)
+  const [viewRecord, setViewRecord] = useState<any | null>(null)
+  const [viewSheetOpen, setViewSheetOpen] = useState(false)
+
+  // NEW: State for Edit
+  const [editRecord, setEditRecord] = useState<any | null>(null)
+  const [editSheetOpen, setEditSheetOpen] = useState(false)
 
 // 2. ADD THE USE EFFECT HOOK TO FETCH SUPABASE DATA
   useEffect(() => {
@@ -107,11 +121,13 @@ export function BlotterTable() {
 
             return {
               id: formattedId, 
+              rawId: record.id,
               dateReported: record.created_at,
               complainant: record.complainant_name || 'Unknown',
               incidentType: record.incident_type || 'Unspecified',
               location: record.location || 'N/A',
-              status: record.status || 'Open'
+              status: record.status || 'Open',
+              narrative: record.narrative || 'No narrative provided.'
             }
           });
           
@@ -126,6 +142,53 @@ export function BlotterTable() {
 
     fetchRecords();
   }, [refreshTrigger]); // DEPENDENCY ADDED: Runs when refreshTrigger changes
+
+// NEW: Function to update the record status in Supabase
+  const handleUpdateStatus = async (rawId: number, newStatus: string) => {
+    try {
+      const { error } = await supabase
+        .from('blotter_records')
+        .update({ status: newStatus })
+        .eq('id', rawId) // This tells Supabase exactly WHICH record to update
+
+      if (error) {
+        console.error("Error updating status:", error.message)
+        return
+      }
+      
+      // If successful, trigger a table refresh so the badge changes instantly!
+      setRefreshTrigger(prev => prev + 1)
+      
+    } catch (error) {
+      console.error("Unexpected error:", error)
+    }
+  }
+
+  // NEW: Function to permanently delete a record
+  const handleDeleteRecord = async (rawId: number) => {
+    // Show a browser confirmation popup before deleting
+    if (!window.confirm("Are you sure you want to delete this record? This action cannot be undone.")) {
+      return; 
+    }
+
+    try {
+      const { error } = await supabase
+        .from('blotter_records')
+        .delete()
+        .eq('id', rawId) // Find the exact row and delete it
+
+      if (error) {
+        console.error("Error deleting record:", error.message)
+        return
+      }
+      
+      // Refresh the table to remove the deleted row
+      setRefreshTrigger(prev => prev + 1)
+      
+    } catch (error) {
+      console.error("Unexpected error:", error)
+    }
+  }
 
   const filteredRecords = blotterRecords.filter((record) => {
     const matchesSearch =
@@ -265,18 +328,59 @@ export function BlotterTable() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="w-40">
-                            <DropdownMenuItem className="gap-2 cursor-pointer">
+                            <DropdownMenuItem 
+                              className="gap-2 cursor-pointer"
+                              onClick={() => {
+                                setViewRecord(record)
+                                setViewSheetOpen(true)
+                              }}
+                            >
                               <Eye className="h-4 w-4" />
-                              View
+                              View Details
                             </DropdownMenuItem>
-                            <DropdownMenuItem className="gap-2 cursor-pointer">
+                            <DropdownMenuItem 
+                              className="gap-2 cursor-pointer"
+                              onClick={() => {
+                                setEditRecord(record)
+                                setEditSheetOpen(true)
+                              }}
+                            >
                               <Pencil className="h-4 w-4" />
                               Edit
                             </DropdownMenuItem>
+
+                            {/* NEW: Delete Button */}
+                            <DropdownMenuItem 
+                              className="gap-2 cursor-pointer text-destructive focus:bg-destructive/10 focus:text-destructive"
+                              onClick={() => handleDeleteRecord(record.rawId)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                              Delete
+                            </DropdownMenuItem>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem className="gap-2 cursor-pointer">
-                              <RefreshCw className="h-4 w-4" />
-                              Update Status
+                            <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
+                              Set Status
+                            </div>
+                            <DropdownMenuItem 
+                              className="cursor-pointer hover:bg-amber-50"
+                              onClick={() => handleUpdateStatus(record.rawId, 'Open')}
+                            >
+                              <div className="h-2 w-2 rounded-full bg-amber-500 mr-2" />
+                              Mark as Open
+                            </DropdownMenuItem>
+                            <DropdownMenuItem 
+                              className="cursor-pointer hover:bg-blue-50"
+                              onClick={() => handleUpdateStatus(record.rawId, 'Investigating')}
+                            >
+                              <div className="h-2 w-2 rounded-full bg-blue-500 mr-2" />
+                              Mark as Investigating
+                            </DropdownMenuItem>
+                            <DropdownMenuItem 
+                              className="cursor-pointer hover:bg-emerald-50"
+                              onClick={() => handleUpdateStatus(record.rawId, 'Resolved')}
+                            >
+                              <div className="h-2 w-2 rounded-full bg-emerald-500 mr-2" />
+                              Mark as Resolved
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -306,6 +410,68 @@ export function BlotterTable() {
         onOpenChange={setSheetOpen} 
         onSuccess={() => setRefreshTrigger(prev => prev + 1)} 
       />
+
+      {/* NEW: Edit Record Sheet */}
+      <EditBlotterSheet 
+        open={editSheetOpen}
+        onOpenChange={setEditSheetOpen}
+        onSuccess={() => setRefreshTrigger(prev => prev + 1)}
+        record={editRecord}
+      />
+
+      {/* View Record Details Sheet */}
+      <Sheet open={viewSheetOpen} onOpenChange={setViewSheetOpen}>
+        <SheetContent className="w-full sm:max-w-md overflow-y-auto">
+          {viewRecord && (
+            <>
+              <SheetHeader className="pb-6 border-b border-border mb-6">
+                <div className="flex items-center justify-between">
+                  <SheetTitle className="text-xl font-bold text-foreground">
+                    {viewRecord.id}
+                  </SheetTitle>
+                  {getStatusBadge(viewRecord.status)}
+                </div>
+                <SheetDescription>
+                  Reported on {new Date(viewRecord.dateReported).toLocaleDateString("en-US", {
+                    month: "long",
+                    day: "numeric",
+                    year: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit"
+                  })}
+                </SheetDescription>
+              </SheetHeader>
+
+              <div className="space-y-6">
+                <div>
+                  <h4 className="text-sm font-medium text-muted-foreground mb-1">Complainant</h4>
+                  <p className="text-base font-medium text-foreground">{viewRecord.complainant}</p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <h4 className="text-sm font-medium text-muted-foreground mb-1">Incident Type</h4>
+                    <p className="text-sm font-medium text-foreground">{viewRecord.incidentType}</p>
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-medium text-muted-foreground mb-1">Location</h4>
+                    <p className="text-sm font-medium text-foreground">{viewRecord.location}</p>
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="text-sm font-medium text-muted-foreground mb-2">Incident Narrative</h4>
+                  <div className="bg-muted/50 p-4 rounded-lg border border-border">
+                    <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">
+                      {viewRecord.narrative}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+        </SheetContent>
+      </Sheet>
     </>
   )
 }

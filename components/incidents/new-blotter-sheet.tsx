@@ -94,10 +94,6 @@ export function NewBlotterSheet({ open, onOpenChange, onSuccess }: NewBlotterShe
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setIsSubmitting(true)
-
-const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
     console.log("1. Button clicked, starting submission...")
     setIsSubmitting(true)
 
@@ -141,7 +137,6 @@ const handleSubmit = async (e: React.FormEvent) => {
       setIsSubmitting(false)
     }
   }
-}
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
