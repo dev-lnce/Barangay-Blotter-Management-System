@@ -269,141 +269,135 @@ export function BlotterTable() {
           <div className="rounded-lg border border-border overflow-hidden">
             <Table>
               <TableHeader>
-                <TableRow className="bg-muted/50 hover:bg-muted/50">
-                  <TableHead className="font-semibold text-foreground">Blotter ID</TableHead>
-                  <TableHead className="font-semibold text-foreground">Incident Date</TableHead>
-                  <TableHead className="font-semibold text-foreground">Date Reported</TableHead>
-                  <TableHead className="font-semibold text-foreground">Complainant</TableHead>
-                  <TableHead className="font-semibold text-foreground">Incident Type</TableHead>
-                  <TableHead className="font-semibold text-foreground">Location</TableHead>
-                  <TableHead className="font-semibold text-foreground">Status</TableHead>
-                  <TableHead className="font-semibold text-foreground text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
+                  <TableRow className="bg-muted/50 hover:bg-muted/50">
+                    <TableHead className="font-semibold text-foreground">Blotter ID</TableHead>
+                    <TableHead className="font-semibold text-foreground">Incident Date</TableHead>
+                    <TableHead className="font-semibold text-foreground">Date Reported</TableHead>
+                    <TableHead className="font-semibold text-foreground">Complainant</TableHead>
+                    <TableHead className="font-semibold text-foreground">Incident Type</TableHead>
+                    <TableHead className="font-semibold text-foreground">Location</TableHead>
+                    <TableHead className="font-semibold text-foreground">Status</TableHead>
+                    <TableHead className="font-semibold text-foreground text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
               <TableBody>
-                {/* 3. HANDLE LOADING STATE IN UI */}
-                {isLoading ? (
-                  <TableRow>
-                    <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
-                      Loading records from database...
+              {isLoading ? (
+                <TableRow>
+                  <TableCell colSpan={8} className="h-24 text-center text-muted-foreground">
+                    Loading records from database...
+                  </TableCell>
+                </TableRow>
+              ) : filteredRecords.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={8} className="h-24 text-center text-muted-foreground">
+                    No records found matching your criteria.
+                  </TableCell>
+                </TableRow>
+              ) : (
+                filteredRecords.map((record) => (
+                  <TableRow key={record.id} className="hover:bg-muted/30">
+                    {/* 1. Blotter ID */}
+                    <TableCell className="font-mono text-sm text-primary font-medium">
+                      {record.id}
                     </TableCell>
-                  </TableRow>
-                ) : filteredRecords.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
-                      No records found matching your criteria.
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  filteredRecords.map((record) => (
-                    <TableRow key={record.id} className="hover:bg-muted/30">
-                      <TableCell className="font-mono text-sm text-primary font-medium">
-                        {record.id}
-                      </TableCell>
-                      <TableCell className="font-mono text-sm text-primary font-medium">
-                        {record.id}
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {record.incidentDate ? new Date(record.incidentDate).toLocaleDateString("en-US", {
-                          month: "short",
-                          day: "numeric",
-                          year: "numeric",
-                        }) : "N/A"}
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {/* Existing Date Reported cell */}
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {new Date(record.dateReported).toLocaleDateString("en-US", {
-                          month: "short",
-                          day: "numeric",
-                          year: "numeric",
-                        })}
-                      </TableCell>
-                      <TableCell className="font-medium text-foreground">
-                        {record.complainant}
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {record.incidentType}
-                      </TableCell>
-                      <TableCell className="text-muted-foreground max-w-[180px] truncate">
-                        {record.location}
-                      </TableCell>
-                      <TableCell>{getStatusBadge(record.status)}</TableCell>
-                      <TableCell className="text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 hover:bg-muted"
-                            >
-                              <MoreHorizontal className="h-4 w-4" />
-                              <span className="sr-only">Open actions menu</span>
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-40">
-                            <DropdownMenuItem 
-                              className="gap-2 cursor-pointer"
-                              onClick={() => {
-                                setViewRecord(record)
-                                setViewSheetOpen(true)
-                              }}
-                            >
-                              <Eye className="h-4 w-4" />
-                              View Details
-                            </DropdownMenuItem>
-                            <DropdownMenuItem 
-                              className="gap-2 cursor-pointer"
-                              onClick={() => {
-                                setEditRecord(record)
-                                setEditSheetOpen(true)
-                              }}
-                            >
-                              <Pencil className="h-4 w-4" />
-                              Edit
-                            </DropdownMenuItem>
 
-                            {/* NEW: Delete Button */}
-                            <DropdownMenuItem 
-                              className="gap-2 cursor-pointer text-destructive focus:bg-destructive/10 focus:text-destructive"
-                              onClick={() => handleDeleteRecord(record.rawId)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                              Delete
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
-                              Set Status
-                            </div>
-                            <DropdownMenuItem 
-                              className="cursor-pointer hover:bg-amber-50"
-                              onClick={() => handleUpdateStatus(record.rawId, 'Open')}
-                            >
-                              <div className="h-2 w-2 rounded-full bg-amber-500 mr-2" />
-                              Mark as Open
-                            </DropdownMenuItem>
-                            <DropdownMenuItem 
-                              className="cursor-pointer hover:bg-blue-50"
-                              onClick={() => handleUpdateStatus(record.rawId, 'Investigating')}
-                            >
-                              <div className="h-2 w-2 rounded-full bg-blue-500 mr-2" />
-                              Mark as Investigating
-                            </DropdownMenuItem>
-                            <DropdownMenuItem 
-                              className="cursor-pointer hover:bg-emerald-50"
-                              onClick={() => handleUpdateStatus(record.rawId, 'Resolved')}
-                            >
-                              <div className="h-2 w-2 rounded-full bg-emerald-500 mr-2" />
-                              Mark as Resolved
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
+                    {/* 2. Incident Date */}
+                    <TableCell className="text-muted-foreground">
+                      {record.incidentDate ? new Date(record.incidentDate).toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                      }) : "N/A"}
+                    </TableCell>
+
+                    {/* 3. Date Reported */}
+                    <TableCell className="text-muted-foreground">
+                      {new Date(record.dateReported).toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                      })}
+                    </TableCell>
+
+                    {/* 4. Complainant */}
+                    <TableCell className="font-medium text-foreground">
+                      {record.complainant}
+                    </TableCell>
+
+                    {/* 5. Incident Type */}
+                    <TableCell className="text-muted-foreground">
+                      {record.incidentType}
+                    </TableCell>
+
+                    {/* 6. Location */}
+                    <TableCell className="text-muted-foreground max-w-[180px] truncate">
+                      {record.location}
+                    </TableCell>
+
+                    {/* 7. Status */}
+                    <TableCell>{getStatusBadge(record.status)}</TableCell>
+
+                    {/* 8. Actions (The "three dashes" menu) */}
+                    <TableCell className="text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 hover:bg-muted"
+                          >
+                            <MoreHorizontal className="h-4 w-4" />
+                            <span className="sr-only">Open actions menu</span>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-40">
+                          <DropdownMenuItem 
+                            className="gap-2 cursor-pointer"
+                            onClick={() => {
+                              setViewRecord(record)
+                              setViewSheetOpen(true)
+                            }}
+                          >
+                            <Eye className="h-4 w-4" />
+                            View Details
+                          </DropdownMenuItem>
+                          <DropdownMenuItem 
+                            className="gap-2 cursor-pointer"
+                            onClick={() => {
+                              setEditRecord(record)
+                              setEditSheetOpen(true)
+                            }}
+                          >
+                            <Pencil className="h-4 w-4" />
+                            Edit
+                          </DropdownMenuItem>
+                          <DropdownMenuItem 
+                            className="gap-2 cursor-pointer text-destructive focus:bg-destructive/10 focus:text-destructive"
+                            onClick={() => handleDeleteRecord(record.rawId)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                            Delete
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
+                            Set Status
+                          </div>
+                          <DropdownMenuItem onClick={() => handleUpdateStatus(record.rawId, 'Open')}>
+                            <div className="h-2 w-2 rounded-full bg-amber-500 mr-2" /> Mark as Open
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleUpdateStatus(record.rawId, 'Investigating')}>
+                            <div className="h-2 w-2 rounded-full bg-blue-500 mr-2" /> Mark as Investigating
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleUpdateStatus(record.rawId, 'Resolved')}>
+                            <div className="h-2 w-2 rounded-full bg-emerald-500 mr-2" /> Mark as Resolved
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
             </Table>
           </div>
 
