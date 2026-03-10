@@ -50,11 +50,13 @@ const incidentTypes = [
 ]
 
 export function EditBlotterSheet({ open, onOpenChange, onSuccess, record }: EditBlotterSheetProps) {
+  const [incidentDate, setIncidentDate] = useState("")
   const [complainantName, setComplainantName] = useState("")
   const [incidentType, setIncidentType] = useState("")
   const [location, setLocation] = useState("")
   const [narrative, setNarrative] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
+
 
   // When the sheet opens or the record changes, pre-fill the form!
   useEffect(() => {
@@ -63,6 +65,7 @@ export function EditBlotterSheet({ open, onOpenChange, onSuccess, record }: Edit
       setIncidentType(record.incidentType || "")
       setLocation(record.location || "")
       setNarrative(record.narrative || "")
+      setIncidentDate(record.incidentDate || "")
     }
   }, [record, open])
 
@@ -78,6 +81,7 @@ export function EditBlotterSheet({ open, onOpenChange, onSuccess, record }: Edit
           incident_type: incidentType,
           location: location,
           narrative: narrative,
+          incident_date: incidentDate
         })
         .eq('id', record.rawId) // Update ONLY the record with this specific ID
 

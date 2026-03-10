@@ -114,7 +114,8 @@ export function NewBlotterSheet({ open, onOpenChange, onSuccess }: NewBlotterShe
             incident_type: incidentType,
             location: location,
             narrative: narrative,
-            status: 'Open'
+            status: 'Open',
+            incident_date: incidentDate
           }
         ])
         .select()

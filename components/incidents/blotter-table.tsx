@@ -123,6 +123,7 @@ export function BlotterTable() {
               id: formattedId, 
               rawId: record.id,
               dateReported: record.created_at,
+              incidentDate: record.incident_date,
               complainant: record.complainant_name || 'Unknown',
               incidentType: record.incident_type || 'Unspecified',
               location: record.location || 'N/A',
@@ -270,6 +271,7 @@ export function BlotterTable() {
               <TableHeader>
                 <TableRow className="bg-muted/50 hover:bg-muted/50">
                   <TableHead className="font-semibold text-foreground">Blotter ID</TableHead>
+                  <TableHead className="font-semibold text-foreground">Incident Date</TableHead>
                   <TableHead className="font-semibold text-foreground">Date Reported</TableHead>
                   <TableHead className="font-semibold text-foreground">Complainant</TableHead>
                   <TableHead className="font-semibold text-foreground">Incident Type</TableHead>
@@ -297,6 +299,19 @@ export function BlotterTable() {
                     <TableRow key={record.id} className="hover:bg-muted/30">
                       <TableCell className="font-mono text-sm text-primary font-medium">
                         {record.id}
+                      </TableCell>
+                      <TableCell className="font-mono text-sm text-primary font-medium">
+                        {record.id}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {record.incidentDate ? new Date(record.incidentDate).toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                        }) : "N/A"}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {/* Existing Date Reported cell */}
                       </TableCell>
                       <TableCell className="text-muted-foreground">
                         {new Date(record.dateReported).toLocaleDateString("en-US", {
