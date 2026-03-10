@@ -21,11 +21,11 @@ export function HeatMapPlaceholder() {
       </CardHeader>
       <CardContent className="pt-0">
         <div
-          className="flex flex-col items-center justify-center gap-3 rounded-lg bg-muted/60 border border-dashed border-border"
-          style={{ height: 260 }}
-          role="img"
-          aria-label="Interactive heat map loading"
-        >
+            className="relative overflow-hidden flex flex-col items-center justify-center gap-3 rounded-lg bg-muted/60 border border-dashed border-border"
+            style={{ height: 260 }}
+            role="img"
+            aria-label="Interactive heat map loading"
+          >
           <div className="flex h-14 w-14 items-center justify-center rounded-full bg-muted border border-border">
             <Map className="h-6 w-6 text-muted-foreground" aria-hidden="true" />
           </div>
