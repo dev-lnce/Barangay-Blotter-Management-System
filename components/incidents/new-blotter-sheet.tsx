@@ -69,6 +69,7 @@ export function NewBlotterSheet({ open, onOpenChange, onSuccess }: NewBlotterShe
   const [complainantName, setComplainantName] = useState("")
   const [incidentType, setIncidentType] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [incidentDate, setIncidentDate] = useState("")
 
   // Simulate duplicate detection based on location
   const showDuplicateWarning =
@@ -258,7 +259,9 @@ export function NewBlotterSheet({ open, onOpenChange, onSuccess }: NewBlotterShe
                   id="incident-date"
                   type="date"
                   className="bg-muted/50"
-                />
+                  value={incidentDate}
+                  onChange={(e) => setIncidentDate(e.target.value)}
+                  />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="incident-time" className="text-sm font-medium">
