@@ -8,6 +8,8 @@ import {
   Map,
   BarChart2,
   ShieldAlert,
+  Users,
+  ScrollText,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -16,6 +18,8 @@ const navItems = [
   { label: "Incident Records", href: "/incidents", icon: FileText },
   { label: "Heat Map", href: "/heatmap", icon: Map },
   { label: "Analysis", href: "/analysis", icon: BarChart2 },
+  { label: "User Management", href: "/users", icon: Users },
+  { label: "Audit Log", href: "/audit", icon: ScrollText },
 ]
 
 export function Sidebar() {
