@@ -23,10 +23,12 @@ import {
 } from "@/components/ui/select"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Separator } from "@/components/ui/separator"
+import { createUser } from "@/lib/auth-actions"
 
 interface AddOfficialDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
+  onUserCreated?: () => void
 }
 
 const positions = [
@@ -46,7 +48,7 @@ function generatePassword() {
   return password
 }
 
-export function AddOfficialDialog({ open, onOpenChange }: AddOfficialDialogProps) {
+export function AddOfficialDialog({ open, onOpenChange, onUserCreated }: AddOfficialDialogProps) {
   const [fullName, setFullName] = useState("")
   const [position, setPosition] = useState("")
   const [email, setEmail] = useState("")
@@ -54,6 +56,7 @@ export function AddOfficialDialog({ open, onOpenChange }: AddOfficialDialogProps
   const [copied, setCopied] = useState(false)
   const [dpaConfirmed, setDpaConfirmed] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const handleGeneratePassword = () => {
     const newPassword = generatePassword()
@@ -72,19 +75,37 @@ export function AddOfficialDialog({ open, onOpenChange }: AddOfficialDialogProps
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!dpaConfirmed) return
-    
+
     setIsSubmitting(true)
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1500))
-    setIsSubmitting(false)
-    
-    // Reset form and close
-    setFullName("")
-    setPosition("")
-    setEmail("")
-    setTempPassword("")
-    setDpaConfirmed(false)
-    onOpenChange(false)
+    setError(null)
+
+    try {
+      const result = await createUser({
+        fullName,
+        email,
+        role: position,
+        tempPassword,
+      })
+
+      if (result.error) {
+        setError(result.error)
+        setIsSubmitting(false)
+        return
+      }
+
+      // Reset form and close
+      setFullName("")
+      setPosition("")
+      setEmail("")
+      setTempPassword("")
+      setDpaConfirmed(false)
+      onOpenChange(false)
+      onUserCreated?.()
+    } catch {
+      setError("An unexpected error occurred.")
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const isFormValid = fullName && position && email && tempPassword && dpaConfirmed
@@ -103,6 +124,13 @@ export function AddOfficialDialog({ open, onOpenChange }: AddOfficialDialogProps
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-5 py-2">
+          {/* Error */}
+          {error && (
+            <Alert className="border-destructive/20 bg-destructive/5">
+              <AlertDescription className="text-xs text-destructive">{error}</AlertDescription>
+            </Alert>
+          )}
+
           {/* Personal Information */}
           <div className="space-y-4">
             <div className="space-y-2">

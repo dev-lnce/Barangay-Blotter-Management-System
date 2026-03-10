@@ -1,12 +1,50 @@
 "use client"
 
-import { Bell, Search } from "lucide-react"
+import { useEffect, useState } from "react"
+import { Bell, Search, LogOut } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
+import { createSupabaseBrowser } from "@/lib/supabase-browser"
+import { signOut } from "@/lib/auth-actions"
+
+interface UserProfile {
+  full_name: string
+  role: string
+}
 
 export function TopHeader() {
+  const [profile, setProfile] = useState<UserProfile | null>(null)
+
+  useEffect(() => {
+    async function loadProfile() {
+      const supabase = createSupabaseBrowser()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        const { data } = await supabase
+          .from('profiles')
+          .select('full_name, role')
+          .eq('id', user.id)
+          .single()
+        if (data) setProfile(data)
+      }
+    }
+    loadProfile()
+  }, [])
+
+  const initials = profile?.full_name
+    ? profile.full_name.split(' ').map(n => n[0]).slice(0, 2).join('')
+    : 'JR'
+
+  const displayName = profile?.full_name
+    ? profile.full_name.split(' ').map((n, i, arr) =>
+        i === arr.length - 1 ? n[0] + '.' : n
+      ).slice(0, 2).join(' ')
+    : 'User'
+
+  const roleName = profile?.role || 'Barangay Admin'
+
   return (
     <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-border bg-card/80 backdrop-blur-sm px-6">
       {/* Left: page title */}
@@ -35,15 +73,23 @@ export function TopHeader() {
           <span className="sr-only">Notifications</span>
         </Button>
 
+        {/* Logout */}
+        <form action={signOut}>
+          <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg" type="submit">
+            <LogOut className="h-4 w-4 text-muted-foreground" />
+            <span className="sr-only">Sign out</span>
+          </Button>
+        </form>
+
         {/* Profile */}
         <div className="flex items-center gap-2.5 pl-1 border-l border-border">
           <Avatar className="h-8 w-8">
-            <AvatarImage src="" alt="Admin user" />
-            <AvatarFallback className="bg-primary text-primary-foreground text-xs font-semibold">JR</AvatarFallback>
+            <AvatarImage src="" alt={profile?.full_name || 'Admin user'} />
+            <AvatarFallback className="bg-primary text-primary-foreground text-xs font-semibold">{initials}</AvatarFallback>
           </Avatar>
           <div className="hidden md:block">
-            <p className="text-xs font-semibold text-foreground font-sans leading-none">Juan R.</p>
-            <p className="text-[10px] text-muted-foreground font-sans mt-0.5">Barangay Admin</p>
+            <p className="text-xs font-semibold text-foreground font-sans leading-none">{displayName}</p>
+            <p className="text-[10px] text-muted-foreground font-sans mt-0.5">{roleName}</p>
           </div>
         </div>
       </div>

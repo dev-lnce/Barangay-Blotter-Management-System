@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { format } from "date-fns"
 import {
   Download,
@@ -44,6 +44,7 @@ import {
 import { Calendar } from "@/components/ui/calendar"
 import { cn } from "@/lib/utils"
 import { CalendarIcon } from "lucide-react"
+import { createSupabaseBrowser } from "@/lib/supabase-browser"
 
 type ActionType =
   | "Login"
@@ -62,15 +63,13 @@ type LogStatus = "Success" | "Warning" | "Failed"
 interface AuditLogEntry {
   id: string
   timestamp: string
-  user: string
-  userId: string
+  user_name: string
+  user_id: string
   action: ActionType
   details: string
-  ipAddress: string
+  ip_address: string
   status: LogStatus
 }
-
-const auditLogs: any[] = []; 
 
 function getActionIcon(action: ActionType) {
   const iconClass = "h-3.5 w-3.5"
@@ -149,13 +148,40 @@ export function AuditLogTable() {
   const [startDate, setStartDate] = useState<Date | undefined>(undefined)
   const [endDate, setEndDate] = useState<Date | undefined>(undefined)
   const [currentPage, setCurrentPage] = useState(1)
+  const [auditLogs, setAuditLogs] = useState<AuditLogEntry[]>([])
+  const [loading, setLoading] = useState(true)
   const itemsPerPage = 10
+
+  useEffect(() => {
+    async function fetchLogs() {
+      const supabase = createSupabaseBrowser()
+      const { data } = await supabase
+        .from('audit_logs')
+        .select('*')
+        .order('timestamp', { ascending: false })
+
+      if (data) {
+        setAuditLogs(data.map((log: Record<string, string>) => ({
+          id: log.id,
+          timestamp: log.timestamp,
+          user_name: log.user_name,
+          user_id: log.user_id || '—',
+          action: log.action as ActionType,
+          details: log.details || '',
+          ip_address: log.ip_address || '0.0.0.0',
+          status: log.status as LogStatus,
+        })))
+      }
+      setLoading(false)
+    }
+    fetchLogs()
+  }, [])
 
   const filteredLogs = auditLogs.filter((log) => {
     const matchesSearch =
-      log.user.toLowerCase().includes(search.toLowerCase()) ||
+      log.user_name.toLowerCase().includes(search.toLowerCase()) ||
       log.details.toLowerCase().includes(search.toLowerCase()) ||
-      log.ipAddress.includes(search)
+      log.ip_address.includes(search)
 
     const matchesAction =
       actionFilter === "all" || log.action === actionFilter
@@ -180,11 +206,11 @@ export function AuditLogTable() {
       ...filteredLogs.map((log) =>
         [
           log.timestamp,
-          `"${log.user}"`,
-          log.userId,
+          `"${log.user_name}"`,
+          log.user_id,
           log.action,
           `"${log.details}"`,
-          log.ipAddress,
+          log.ip_address,
           log.status,
         ].join(",")
       ),
@@ -361,7 +387,16 @@ export function AuditLogTable() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {paginatedLogs.length === 0 ? (
+              {loading ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={5}
+                    className="h-24 text-center text-muted-foreground text-xs"
+                  >
+                    Loading audit logs...
+                  </TableCell>
+                </TableRow>
+              ) : paginatedLogs.length === 0 ? (
                 <TableRow>
                   <TableCell
                     colSpan={5}
@@ -390,10 +425,10 @@ export function AuditLogTable() {
                     </TableCell>
                     <TableCell className="py-2">
                       <div className="text-xs font-medium text-foreground">
-                        {log.user}
+                        {log.user_name}
                       </div>
                       <div className="font-mono text-[10px] text-muted-foreground">
-                        {log.userId}
+                        {log.user_id.slice(0, 8)}
                       </div>
                     </TableCell>
                     <TableCell className="py-2">
@@ -434,7 +469,7 @@ export function AuditLogTable() {
                             : "bg-muted text-muted-foreground"
                         )}
                       >
-                        {log.ipAddress}
+                        {log.ip_address}
                       </code>
                     </TableCell>
                     <TableCell className="py-2 text-right">
@@ -452,7 +487,7 @@ export function AuditLogTable() {
           <p className="font-mono">
             Showing{" "}
             <span className="font-medium text-foreground">
-              {(currentPage - 1) * itemsPerPage + 1}
+              {filteredLogs.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0}
             </span>
             -
             <span className="font-medium text-foreground">
@@ -493,7 +528,7 @@ export function AuditLogTable() {
         <div className="flex items-center gap-2 rounded-md bg-muted/50 border border-border px-3 py-2">
           <ShieldAlert className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
           <p className="text-[10px] text-muted-foreground">
-            Audit logs are retained for 365 days per Data Privacy Act compliance requirements. 
+            Audit logs are retained for 365 days per Data Privacy Act compliance requirements.
             Tampering with system logs is a criminal offense under RA 10175 (Cybercrime Prevention Act).
           </p>
         </div>

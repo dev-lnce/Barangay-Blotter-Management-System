@@ -17,6 +17,7 @@ interface HeatmapControlsProps {
   onClusterToggle: (enabled: boolean) => void
   severities: { high: boolean; medium: boolean; low: boolean }
   clusteringEnabled: boolean
+  onDateChange?: (start?: Date, end?: Date) => void
 }
 
 export function HeatmapControls({
@@ -24,9 +25,20 @@ export function HeatmapControls({
   onClusterToggle,
   severities,
   clusteringEnabled,
+  onDateChange,
 }: HeatmapControlsProps) {
   const [startDate, setStartDate] = useState<Date | undefined>(new Date(2026, 2, 1))
   const [endDate, setEndDate] = useState<Date | undefined>(new Date(2026, 2, 10))
+
+  const handleStartDateChange = (date: Date | undefined) => {
+    setStartDate(date)
+    onDateChange?.(date, endDate)
+  }
+
+  const handleEndDateChange = (date: Date | undefined) => {
+    setEndDate(date)
+    onDateChange?.(startDate, date)
+  }
 
   return (
     <div className="flex h-full w-full flex-col gap-4 p-4 overflow-y-auto">
@@ -64,7 +76,7 @@ export function HeatmapControls({
                 <CalendarComponent
                   mode="single"
                   selected={startDate}
-                  onSelect={setStartDate}
+                  onSelect={handleStartDateChange}
                   initialFocus
                 />
               </PopoverContent>
@@ -89,7 +101,7 @@ export function HeatmapControls({
                 <CalendarComponent
                   mode="single"
                   selected={endDate}
-                  onSelect={setEndDate}
+                  onSelect={handleEndDateChange}
                   initialFocus
                 />
               </PopoverContent>

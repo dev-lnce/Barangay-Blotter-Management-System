@@ -8,19 +8,31 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { cn } from "@/lib/utils"
+import { signIn } from "@/lib/auth-actions"
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [idNumber, setIdNumber] = useState("")
   const [password, setPassword] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
-    // Simulate auth delay
-    await new Promise((r) => setTimeout(r, 1500))
-    setIsLoading(false)
+    setError(null)
+
+    try {
+      const result = await signIn({ idNumber, password })
+      if (result?.error) {
+        setError(result.error)
+      }
+      // If successful, signIn will redirect via server action
+    } catch {
+      setError("An unexpected error occurred. Please try again.")
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -224,15 +236,34 @@ export default function LoginPage() {
 
             <Separator />
 
+            {/* Error Message */}
+            {error && (
+              <div
+                className="flex items-start gap-2.5 rounded-lg px-4 py-3"
+                style={{
+                  background: "oklch(0.577 0.245 27.325 / 0.08)",
+                  border: "1px solid oklch(0.577 0.245 27.325 / 0.25)",
+                }}
+              >
+                <Shield
+                  className="w-3.5 h-3.5 mt-0.5 shrink-0"
+                  style={{ color: "oklch(0.577 0.245 27.325)" }}
+                />
+                <p className="text-xs leading-relaxed" style={{ color: "oklch(0.577 0.245 27.325)" }}>
+                  {error}
+                </p>
+              </div>
+            )}
+
             {/* Form */}
             <form onSubmit={handleSubmit} className="space-y-5">
-              {/* Official ID Number */}
+              {/* Official ID Number / Email */}
               <div className="space-y-2">
                 <Label
                   htmlFor="official-id"
                   className="text-sm font-medium text-foreground"
                 >
-                  Official ID Number
+                  Official ID / Email
                 </Label>
                 <div className="relative">
                   <IdCard
@@ -242,7 +273,7 @@ export default function LoginPage() {
                   <Input
                     id="official-id"
                     type="text"
-                    placeholder="e.g. BRY-2024-0042"
+                    placeholder="e.g. officer@brgybanaybanay.gov.ph"
                     value={idNumber}
                     onChange={(e) => setIdNumber(e.target.value)}
                     className={cn(

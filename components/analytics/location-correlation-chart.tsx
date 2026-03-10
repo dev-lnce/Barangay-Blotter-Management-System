@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import {
   Card,
   CardContent,
@@ -17,8 +18,14 @@ import {
   ResponsiveContainer,
   Cell,
 } from "recharts"
+import { Skeleton } from "@/components/ui/skeleton"
+import { getLocationCorrelation } from "@/lib/analytics-queries"
 
-const locationData: any[] = [];
+interface LocationEntry {
+  zone: string
+  incidents: number
+  severity: string
+}
 
 const severityColors: Record<string, string> = {
   high: "var(--color-chart-5)",
@@ -27,6 +34,18 @@ const severityColors: Record<string, string> = {
 }
 
 export function LocationCorrelationChart() {
+  const [locationData, setLocationData] = useState<LocationEntry[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function load() {
+      const data = await getLocationCorrelation()
+      setLocationData(data)
+      setLoading(false)
+    }
+    load()
+  }, [])
+
   return (
     <Card className="shadow-sm border-border">
       <CardHeader className="pb-4">
@@ -51,52 +70,56 @@ export function LocationCorrelationChart() {
         </div>
       </CardHeader>
       <CardContent className="pt-0">
-        <ResponsiveContainer width="100%" height={280}>
-          <BarChart
-            data={locationData}
-            layout="vertical"
-            margin={{ top: 0, right: 24, left: 8, bottom: 0 }}
-          >
-            <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" horizontal={false} />
-            <XAxis
-              type="number"
-              tick={{ fontSize: 11, fill: "var(--color-muted-foreground)", fontFamily: "var(--font-sans)" }}
-              axisLine={false}
-              tickLine={false}
-              label={{
-                value: "Number of Incidents",
-                position: "bottom",
-                offset: -4,
-                style: { fontSize: 11, fill: "var(--color-muted-foreground)", fontFamily: "var(--font-sans)" },
-              }}
-            />
-            <YAxis
-              type="category"
-              dataKey="zone"
-              tick={{ fontSize: 11, fill: "var(--color-muted-foreground)", fontFamily: "var(--font-sans)" }}
-              axisLine={false}
-              tickLine={false}
-              width={180}
-            />
-            <Tooltip
-              contentStyle={{
-                background: "var(--color-card)",
-                border: "1px solid var(--color-border)",
-                borderRadius: "var(--radius-md)",
-                fontSize: 12,
-                fontFamily: "var(--font-sans)",
-              }}
-              labelStyle={{ color: "var(--color-foreground)", fontWeight: 600 }}
-              formatter={(value: number) => [`${value} incidents`, "Count"]}
-              cursor={{ fill: "var(--color-muted)", opacity: 0.2 }}
-            />
-            <Bar dataKey="incidents" radius={[0, 4, 4, 0]} barSize={20}>
-              {locationData.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={severityColors[entry.severity]} />
-              ))}
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
+        {loading ? (
+          <Skeleton className="w-full h-[280px] rounded-lg" />
+        ) : (
+          <ResponsiveContainer width="100%" height={280}>
+            <BarChart
+              data={locationData}
+              layout="vertical"
+              margin={{ top: 0, right: 24, left: 8, bottom: 0 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" horizontal={false} />
+              <XAxis
+                type="number"
+                tick={{ fontSize: 11, fill: "var(--color-muted-foreground)", fontFamily: "var(--font-sans)" }}
+                axisLine={false}
+                tickLine={false}
+                label={{
+                  value: "Number of Incidents",
+                  position: "bottom",
+                  offset: -4,
+                  style: { fontSize: 11, fill: "var(--color-muted-foreground)", fontFamily: "var(--font-sans)" },
+                }}
+              />
+              <YAxis
+                type="category"
+                dataKey="zone"
+                tick={{ fontSize: 11, fill: "var(--color-muted-foreground)", fontFamily: "var(--font-sans)" }}
+                axisLine={false}
+                tickLine={false}
+                width={180}
+              />
+              <Tooltip
+                contentStyle={{
+                  background: "var(--color-card)",
+                  border: "1px solid var(--color-border)",
+                  borderRadius: "var(--radius-md)",
+                  fontSize: 12,
+                  fontFamily: "var(--font-sans)",
+                }}
+                labelStyle={{ color: "var(--color-foreground)", fontWeight: 600 }}
+                formatter={(value: number) => [`${value} incidents`, "Count"]}
+                cursor={{ fill: "var(--color-muted)", opacity: 0.2 }}
+              />
+              <Bar dataKey="incidents" radius={[0, 4, 4, 0]} barSize={20}>
+                {locationData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={severityColors[entry.severity]} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        )}
       </CardContent>
     </Card>
   )

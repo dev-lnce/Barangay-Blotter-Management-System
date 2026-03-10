@@ -24,51 +24,8 @@ interface Cluster {
 interface MapCanvasProps {
   severities: { high: boolean; medium: boolean; low: boolean }
   clusteringEnabled: boolean
+  incidents?: Incident[]
 }
-
-const singleIncidents: Incident[] = [
-  { id: "INC-001", x: 15, y: 25, severity: "high", type: "Assault" },
-  { id: "INC-002", x: 72, y: 18, severity: "medium", type: "Theft" },
-  { id: "INC-003", x: 85, y: 55, severity: "low", type: "Noise" },
-  { id: "INC-004", x: 20, y: 70, severity: "high", type: "Vandalism" },
-  { id: "INC-005", x: 55, y: 80, severity: "medium", type: "Dispute" },
-  { id: "INC-006", x: 40, y: 35, severity: "low", type: "Loitering" },
-]
-
-const clusters: Cluster[] = [
-  {
-    id: "CLUSTER-01",
-    x: 30,
-    y: 45,
-    count: 14,
-    incidents: [
-      { type: "Theft", count: 6 },
-      { type: "Assault", count: 4 },
-      { type: "Vandalism", count: 4 },
-    ],
-  },
-  {
-    id: "CLUSTER-02",
-    x: 65,
-    y: 40,
-    count: 8,
-    incidents: [
-      { type: "Noise Complaint", count: 3 },
-      { type: "Dispute", count: 3 },
-      { type: "Loitering", count: 2 },
-    ],
-  },
-  {
-    id: "CLUSTER-03",
-    x: 50,
-    y: 65,
-    count: 5,
-    incidents: [
-      { type: "Theft", count: 3 },
-      { type: "Trespassing", count: 2 },
-    ],
-  },
-]
 
 const severityColors = {
   high: "bg-[oklch(0.577_0.245_27.325)]",
@@ -82,13 +39,46 @@ const severityRingColors = {
   low: "ring-[oklch(0.6_0.16_155)]/40",
 }
 
-export function MapCanvas({ severities, clusteringEnabled }: MapCanvasProps) {
+function buildClusters(incidents: Incident[]): Cluster[] {
+  // Simple grid-based clustering
+  const gridSize = 15 // % of canvas
+  const grid: Record<string, Incident[]> = {}
+
+  incidents.forEach(inc => {
+    const gx = Math.floor(inc.x / gridSize)
+    const gy = Math.floor(inc.y / gridSize)
+    const key = `${gx}-${gy}`
+    if (!grid[key]) grid[key] = []
+    grid[key].push(inc)
+  })
+
+  return Object.entries(grid)
+    .filter(([, items]) => items.length >= 2)
+    .map(([key, items], idx) => {
+      const avgX = items.reduce((s, i) => s + i.x, 0) / items.length
+      const avgY = items.reduce((s, i) => s + i.y, 0) / items.length
+      const typeCounts: Record<string, number> = {}
+      items.forEach(i => { typeCounts[i.type] = (typeCounts[i.type] || 0) + 1 })
+
+      return {
+        id: `CLUSTER-${idx}`,
+        x: avgX,
+        y: avgY,
+        count: items.length,
+        incidents: Object.entries(typeCounts).map(([type, count]) => ({ type, count })),
+      }
+    })
+}
+
+export function MapCanvas({ severities, clusteringEnabled, incidents = [] }: MapCanvasProps) {
   const [hoveredCluster, setHoveredCluster] = useState<string | null>(null)
   const [zoom, setZoom] = useState(1)
 
-  const filteredIncidents = singleIncidents.filter(
+  const filteredIncidents = incidents.filter(
     (incident) => severities[incident.severity]
   )
+
+  const clusters = buildClusters(filteredIncidents)
 
   return (
     <div className="relative flex-1 h-full bg-secondary/30 rounded-xl border border-border overflow-hidden">

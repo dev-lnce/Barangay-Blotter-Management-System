@@ -7,11 +7,13 @@ import {
   FileText,
   Map,
   BarChart2,
-  ShieldAlert,
   Users,
   ScrollText,
+  LogOut,
+  ShieldAlert,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { signOut } from "@/lib/auth-actions"
 
 const navItems = [
   { label: "Dashboard", href: "/", icon: LayoutDashboard },
@@ -72,8 +74,17 @@ export function Sidebar() {
       </nav>
 
       {/* Footer */}
-      <div className="border-t border-sidebar-border px-4 py-4">
-        <p className="text-[10px] text-sidebar-foreground/30 font-sans">
+      <div className="border-t border-sidebar-border px-3 py-3 space-y-2">
+        <form action={signOut}>
+          <button
+            type="submit"
+            className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-sidebar-foreground/60 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground transition-colors font-sans"
+          >
+            <LogOut className="h-4 w-4 shrink-0 text-sidebar-foreground/50" />
+            Sign Out
+          </button>
+        </form>
+        <p className="px-3 text-[10px] text-sidebar-foreground/30 font-sans">
           Brgy. System v2.4.1
         </p>
       </div>

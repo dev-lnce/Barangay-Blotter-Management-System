@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import {
   Search,
   MoreHorizontal,
@@ -28,8 +28,17 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { AddOfficialDialog } from "./add-official-dialog"
+import { createSupabaseBrowser } from "@/lib/supabase-browser"
+import { resetUserPassword, revokeUserAccess } from "@/lib/auth-actions"
 
-const systemUsers: any[] = []; 
+interface SystemUser {
+  id: string
+  full_name: string
+  role: string
+  email: string
+  status: string
+  last_active: string
+}
 
 function getRoleBadge(role: string) {
   switch (role) {
@@ -81,16 +90,61 @@ function formatLastActive(dateString: string) {
 export function UsersTable() {
   const [search, setSearch] = useState("")
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [systemUsers, setSystemUsers] = useState<SystemUser[]>([])
+  const [loading, setLoading] = useState(true)
+
+  const fetchUsers = async () => {
+    const supabase = createSupabaseBrowser()
+    const { data } = await supabase
+      .from('profiles')
+      .select('id, full_name, role, email, status, last_active')
+      .order('last_active', { ascending: false })
+
+    if (data) {
+      setSystemUsers(data.map(u => ({
+        id: u.id,
+        full_name: u.full_name,
+        role: u.role,
+        email: u.email,
+        status: u.status,
+        last_active: u.last_active,
+      })))
+    }
+    setLoading(false)
+  }
+
+  useEffect(() => {
+    fetchUsers()
+  }, [])
 
   const filteredUsers = systemUsers.filter((user) => {
     const matchesSearch =
-      user.name.toLowerCase().includes(search.toLowerCase()) ||
+      user.full_name.toLowerCase().includes(search.toLowerCase()) ||
       user.email.toLowerCase().includes(search.toLowerCase()) ||
       user.role.toLowerCase().includes(search.toLowerCase())
     return matchesSearch
   })
 
   const activeCount = systemUsers.filter((u) => u.status === "Active").length
+
+  const handleResetPassword = async (userId: string, email: string) => {
+    const result = await resetUserPassword(userId, email)
+    if (result.error) {
+      alert(`Error: ${result.error}`)
+    } else {
+      alert('Password reset email sent successfully.')
+    }
+  }
+
+  const handleRevokeAccess = async (userId: string, userName: string) => {
+    if (!confirm(`Are you sure you want to revoke access for ${userName}?`)) return
+    const result = await revokeUserAccess(userId, userName)
+    if (result.error) {
+      alert(`Error: ${result.error}`)
+    } else {
+      fetchUsers()
+    }
+  }
 
   return (
     <>
@@ -139,7 +193,13 @@ export function UsersTable() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredUsers.length === 0 ? (
+                {loading ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
+                      Loading users...
+                    </TableCell>
+                  </TableRow>
+                ) : filteredUsers.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
                       No users found matching your search.
@@ -151,15 +211,15 @@ export function UsersTable() {
                       <TableCell>
                         <div className="flex items-center gap-3">
                           <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold text-sm">
-                            {user.name
+                            {user.full_name
                               .split(" ")
-                              .map((n: any[]) => n[0])
+                              .map((n) => n[0])
                               .slice(0, 2)
                               .join("")}
                           </div>
                           <div>
-                            <p className="font-medium text-foreground">{user.name}</p>
-                            <p className="text-xs text-muted-foreground">ID: {user.id}</p>
+                            <p className="font-medium text-foreground">{user.full_name}</p>
+                            <p className="text-xs text-muted-foreground">ID: {user.id.slice(0, 8).toUpperCase()}</p>
                           </div>
                         </div>
                       </TableCell>
@@ -175,7 +235,7 @@ export function UsersTable() {
                             }`}
                           />
                           <span className="text-sm text-muted-foreground">
-                            {formatLastActive(user.lastActive)}
+                            {formatLastActive(user.last_active)}
                           </span>
                         </div>
                       </TableCell>
@@ -192,12 +252,18 @@ export function UsersTable() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="w-48">
-                            <DropdownMenuItem className="gap-2 cursor-pointer">
+                            <DropdownMenuItem
+                              className="gap-2 cursor-pointer"
+                              onClick={() => handleResetPassword(user.id, user.email)}
+                            >
                               <KeyRound className="h-4 w-4" />
                               Reset Password
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem className="gap-2 cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/10">
+                            <DropdownMenuItem
+                              className="gap-2 cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/10"
+                              onClick={() => handleRevokeAccess(user.id, user.full_name)}
+                            >
                               <ShieldOff className="h-4 w-4" />
                               Revoke Access
                             </DropdownMenuItem>
@@ -222,7 +288,7 @@ export function UsersTable() {
         </CardContent>
       </Card>
 
-      <AddOfficialDialog open={dialogOpen} onOpenChange={setDialogOpen} />
+      <AddOfficialDialog open={dialogOpen} onOpenChange={setDialogOpen} onUserCreated={fetchUsers} />
     </>
   )
 }
