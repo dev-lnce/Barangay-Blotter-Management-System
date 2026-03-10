@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from 'react';
+import { supabase } from '@/lib/supabase';
 import { Search, Filter, Plus, MoreHorizontal, Eye, Pencil, RefreshCw } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -29,8 +30,6 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { NewBlotterSheet } from "./new-blotter-sheet"
-
-const blotterRecords: any[] = [];
 
 const incidentTypes = [
   "All Types",
@@ -70,10 +69,51 @@ function getStatusBadge(status: string) {
 }
 
 export function BlotterTable() {
+  // 1. ADD NEW STATE VARIABLES HERE
+  const [blotterRecords, setBlotterRecords] = useState<any[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  
   const [search, setSearch] = useState("")
   const [statusFilter, setStatusFilter] = useState("All Statuses")
   const [typeFilter, setTypeFilter] = useState("All Types")
   const [sheetOpen, setSheetOpen] = useState(false)
+
+  // 2. ADD THE USE EFFECT HOOK TO FETCH SUPABASE DATA
+  useEffect(() => {
+    async function fetchRecords() {
+      try {
+        const { data, error } = await supabase
+          .from('blotter_records')
+          .select('*')
+          .order('created_at', { ascending: false }); // Show newest first
+
+        if (error) {
+          console.error("Error fetching records:", error.message);
+          return;
+        }
+
+        if (data) {
+          // Map the database snake_case names to match your UI's camelCase expectations
+          const formattedData = data.map((record) => ({
+            id: record.id.toString(), 
+            dateReported: record.created_at,
+            complainant: record.complainant_name || 'Unknown',
+            incidentType: record.incident_type || 'Unspecified',
+            location: record.location || 'N/A',
+            status: record.status || 'Open'
+          }));
+          
+          setBlotterRecords(formattedData);
+        }
+      } catch (error) {
+        console.error("Unexpected error:", error);
+      } finally {
+        setIsLoading(false); // Turn off loading spinner
+      }
+    }
+
+    fetchRecords();
+  }, []); // Empty array means this runs once when the component mounts
 
   const filteredRecords = blotterRecords.filter((record) => {
     const matchesSearch =
@@ -164,7 +204,14 @@ export function BlotterTable() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredRecords.length === 0 ? (
+                {/* 3. HANDLE LOADING STATE IN UI */}
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
+                      Loading records from database...
+                    </TableCell>
+                  </TableRow>
+                ) : filteredRecords.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
                       No records found matching your criteria.
@@ -235,11 +282,13 @@ export function BlotterTable() {
               Showing <span className="font-medium text-foreground">{filteredRecords.length}</span> of{" "}
               <span className="font-medium text-foreground">{blotterRecords.length}</span> records
             </p>
-            <p className="text-xs">Last synced: Today at 2:45 PM</p>
+            {/* Optional: You can make the sync time dynamic later */}
+            <p className="text-xs">Last synced: Just now</p> 
           </div>
         </CardContent>
       </Card>
 
+      {/* Make sure to pass a way to refresh records to your form so the table updates when a new record is saved! */}
       <NewBlotterSheet open={sheetOpen} onOpenChange={setSheetOpen} />
     </>
   )
