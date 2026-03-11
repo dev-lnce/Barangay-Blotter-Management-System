@@ -4,13 +4,62 @@ import { createSupabaseServer, createSupabaseAdmin } from './supabase-server'
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 
+export async function signUpOfficial(formData: { 
+  idNumber: string; 
+  password: string; 
+  fullName: string;
+  role: string;
+}) {
+  const supabaseAdmin = await createSupabaseAdmin() // Use admin client to bypass RLS if needed
+
+  // 1. Create the user in Supabase Auth
+  // Note: Adjust the email format based on whether you chose Option A or Option B above
+  const emailToRegister = `${formData.idNumber}@banaybanay2.gov.ph` 
+
+  const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
+    email: emailToRegister,
+    password: formData.password,
+    email_confirm: true, // Auto-confirm since an admin is creating it
+  })
+
+  if (authError) return { error: authError.message }
+
+  // 2. Create their public profile record
+  const { error: profileError } = await supabaseAdmin
+    .from('profiles')
+    .insert({
+      id: authData.user.id,
+      id_number: formData.idNumber,
+      full_name: formData.fullName,
+      role: formData.role,
+      status: 'Active'
+    })
+
+  if (profileError) {
+    // Ideally, roll back the auth user creation here if the profile fails
+    return { error: "Failed to create official profile." }
+  }
+
+  return { success: true }
+}
+
 export async function signIn(formData: { idNumber: string; password: string }) {
   const supabase = await createSupabaseServer()
 
-  // The ID number serves as the email identifier for Supabase Auth
-  // We look up the actual email from the profiles table, or use idNumber directly
+  // 1. Look up the email associated with the ID Number
+  const { data: profile, error: profileError } = await supabase
+    .from('profiles')
+    .select('email')
+    .eq('id_number', formData.idNumber)
+    .single()
+
+  if (profileError || !profile) {
+     return { error: "Invalid ID Number or Password." }
+  }
+
+  // 2. Authenticate using the retrieved email
   const { data, error } = await supabase.auth.signInWithPassword({
-    email: formData.idNumber,
+    email: profile.email,
     password: formData.password,
   })
 
