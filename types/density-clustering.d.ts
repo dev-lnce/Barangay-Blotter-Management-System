@@ -1,6 +1,10 @@
 declare module "density-clustering" {
   export class DBSCAN {
-    run(dataset: number[][], neighborhood_radius: number, min_points: number): number[][];
+    run(
+      dataset: number[][],
+      neighborhood_radius: number,
+      min_points: number,
+    ): number[][];
     noise: number[];
   }
 
@@ -9,6 +13,10 @@ declare module "density-clustering" {
   }
 
   export class OPTICS {
-    run(dataset: number[][], neighborhood_radius: number, min_points: number): number[][];
+    run(
+      dataset: number[][],
+      neighborhood_radius: number,
+      min_points: number,
+    ): number[][];
   }
 }
