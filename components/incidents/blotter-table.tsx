@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Search, Filter, Plus, MoreHorizontal, Eye, Pencil, RefreshCw, Trash2 } from "lucide-react"
+import { Search, Filter, Plus, MoreHorizontal, Eye, Pencil, RefreshCw, Trash2, Printer } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -38,6 +38,8 @@ import {
 } from "@/components/ui/select"
 import { NewBlotterSheet } from "./new-blotter-sheet"
 import { EditBlotterSheet } from "./edit-blotter-sheet"
+import { PrintBlotterExtract } from "./print-blotter-extract"
+import { logAuditEvent } from "@/lib/audit"
 
 const incidentTypes = [
   "All Types",
@@ -77,7 +79,6 @@ function getStatusBadge(status: string) {
 }
 
 export function BlotterTable() {
-  // 1. ADD NEW STATE VARIABLES HERE
   const [blotterRecords, setBlotterRecords] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
   
@@ -86,24 +87,26 @@ export function BlotterTable() {
   const [typeFilter, setTypeFilter] = useState("All Types")
   const [sheetOpen, setSheetOpen] = useState(false)
   
-  // NEW: Add a trigger state to re-fetch data
   const [refreshTrigger, setRefreshTrigger] = useState(0)
   const [viewRecord, setViewRecord] = useState<any | null>(null)
   const [viewSheetOpen, setViewSheetOpen] = useState(false)
 
-  // NEW: State for Edit
+  // State for Edit
   const [editRecord, setEditRecord] = useState<any | null>(null)
   const [editSheetOpen, setEditSheetOpen] = useState(false)
 
-// 2. ADD THE USE EFFECT HOOK TO FETCH SUPABASE DATA
+  // State for Print Extract
+  const [printRecord, setPrintRecord] = useState<any | null>(null)
+  const [printDialogOpen, setPrintDialogOpen] = useState(false)
+
   useEffect(() => {
     async function fetchRecords() {
-      setIsLoading(true); // Ensure loading state is true on refresh
+      setIsLoading(true);
       try {
         const { data, error } = await supabase
           .from('blotter_records')
           .select('*')
-          .order('created_at', { ascending: false }); // Show newest first
+          .order('created_at', { ascending: false });
 
         if (error) {
           console.error("Error fetching records:", error.message);
@@ -112,11 +115,7 @@ export function BlotterTable() {
 
         if (data) {
           const formattedData = data.map((record) => {
-            // Get the year from the created_at date
             const recordYear = new Date(record.created_at).getFullYear();
-            
-            // Format ID to look like BLT-2026-0001
-            // padStart(4, '0') adds leading zeros to the number
             const formattedId = `BLT-${recordYear}-${record.id.toString().padStart(4, '0')}`;
 
             return {
@@ -137,27 +136,35 @@ export function BlotterTable() {
       } catch (error) {
         console.error("Unexpected error:", error);
       } finally {
-        setIsLoading(false); // Turn off loading spinner
+        setIsLoading(false);
       }
     }
 
     fetchRecords();
-  }, [refreshTrigger]); // DEPENDENCY ADDED: Runs when refreshTrigger changes
+  }, [refreshTrigger]);
 
-// NEW: Function to update the record status in Supabase
-  const handleUpdateStatus = async (rawId: number, newStatus: string) => {
+  const handleUpdateStatus = async (rawId: number, newStatus: string, recordId: string) => {
     try {
       const { error } = await supabase
         .from('blotter_records')
         .update({ status: newStatus })
-        .eq('id', rawId) // This tells Supabase exactly WHICH record to update
+        .eq('id', rawId)
 
       if (error) {
         console.error("Error updating status:", error.message)
         return
       }
+
+      // Log audit event for status changes (especially Resolved)
+      try {
+        await logAuditEvent({
+          action: 'Status Changed' as any,
+          details: `Changed status of ${recordId} to "${newStatus}"`,
+        })
+      } catch {
+        // Don't block the UI if audit fails
+      }
       
-      // If successful, trigger a table refresh so the badge changes instantly!
       setRefreshTrigger(prev => prev + 1)
       
     } catch (error) {
@@ -165,9 +172,7 @@ export function BlotterTable() {
     }
   }
 
-  // NEW: Function to permanently delete a record
-  const handleDeleteRecord = async (rawId: number) => {
-    // Show a browser confirmation popup before deleting
+  const handleDeleteRecord = async (rawId: number, recordId: string) => {
     if (!window.confirm("Are you sure you want to delete this record? This action cannot be undone.")) {
       return; 
     }
@@ -176,14 +181,23 @@ export function BlotterTable() {
       const { error } = await supabase
         .from('blotter_records')
         .delete()
-        .eq('id', rawId) // Find the exact row and delete it
+        .eq('id', rawId)
 
       if (error) {
         console.error("Error deleting record:", error.message)
         return
       }
+
+      // Log audit event for deletion
+      try {
+        await logAuditEvent({
+          action: 'Record Deleted',
+          details: `Deleted blotter record ${recordId}`,
+        })
+      } catch {
+        // Don't block the UI if audit fails
+      }
       
-      // Refresh the table to remove the deleted row
       setRefreshTrigger(prev => prev + 1)
       
     } catch (error) {
@@ -337,7 +351,7 @@ export function BlotterTable() {
                     {/* 7. Status */}
                     <TableCell>{getStatusBadge(record.status)}</TableCell>
 
-                    {/* 8. Actions (The "three dashes" menu) */}
+                    {/* 8. Actions */}
                     <TableCell className="text-right">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -350,7 +364,7 @@ export function BlotterTable() {
                             <span className="sr-only">Open actions menu</span>
                           </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-40">
+                        <DropdownMenuContent align="end" className="w-48">
                           <DropdownMenuItem 
                             className="gap-2 cursor-pointer"
                             onClick={() => {
@@ -372,8 +386,18 @@ export function BlotterTable() {
                             Edit
                           </DropdownMenuItem>
                           <DropdownMenuItem 
+                            className="gap-2 cursor-pointer"
+                            onClick={() => {
+                              setPrintRecord(record)
+                              setPrintDialogOpen(true)
+                            }}
+                          >
+                            <Printer className="h-4 w-4" />
+                            Print Extract
+                          </DropdownMenuItem>
+                          <DropdownMenuItem 
                             className="gap-2 cursor-pointer text-destructive focus:bg-destructive/10 focus:text-destructive"
-                            onClick={() => handleDeleteRecord(record.rawId)}
+                            onClick={() => handleDeleteRecord(record.rawId, record.id)}
                           >
                             <Trash2 className="h-4 w-4" />
                             Delete
@@ -382,13 +406,13 @@ export function BlotterTable() {
                           <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
                             Set Status
                           </div>
-                          <DropdownMenuItem onClick={() => handleUpdateStatus(record.rawId, 'Open')}>
+                          <DropdownMenuItem onClick={() => handleUpdateStatus(record.rawId, 'Open', record.id)}>
                             <div className="h-2 w-2 rounded-full bg-amber-500 mr-2" /> Mark as Open
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleUpdateStatus(record.rawId, 'Investigating')}>
+                          <DropdownMenuItem onClick={() => handleUpdateStatus(record.rawId, 'Investigating', record.id)}>
                             <div className="h-2 w-2 rounded-full bg-blue-500 mr-2" /> Mark as Investigating
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleUpdateStatus(record.rawId, 'Resolved')}>
+                          <DropdownMenuItem onClick={() => handleUpdateStatus(record.rawId, 'Resolved', record.id)}>
                             <div className="h-2 w-2 rounded-full bg-emerald-500 mr-2" /> Mark as Resolved
                           </DropdownMenuItem>
                         </DropdownMenuContent>
@@ -407,25 +431,31 @@ export function BlotterTable() {
               Showing <span className="font-medium text-foreground">{filteredRecords.length}</span> of{" "}
               <span className="font-medium text-foreground">{blotterRecords.length}</span> records
             </p>
-            {/* Optional: You can make the sync time dynamic later */}
             <p className="text-xs">Last synced: Just now</p> 
           </div>
         </CardContent>
       </Card>
 
-      {/* Pass the refresh function so the table updates when a new record is saved! */}
+      {/* New Blotter Sheet */}
       <NewBlotterSheet 
         open={sheetOpen} 
         onOpenChange={setSheetOpen} 
         onSuccess={() => setRefreshTrigger(prev => prev + 1)} 
       />
 
-      {/* NEW: Edit Record Sheet */}
+      {/* Edit Record Sheet */}
       <EditBlotterSheet 
         open={editSheetOpen}
         onOpenChange={setEditSheetOpen}
         onSuccess={() => setRefreshTrigger(prev => prev + 1)}
         record={editRecord}
+      />
+
+      {/* Print Blotter Extract Dialog */}
+      <PrintBlotterExtract
+        open={printDialogOpen}
+        onOpenChange={setPrintDialogOpen}
+        record={printRecord}
       />
 
       {/* View Record Details Sheet */}
@@ -475,6 +505,21 @@ export function BlotterTable() {
                       {viewRecord.narrative}
                     </p>
                   </div>
+                </div>
+
+                {/* Print Extract Button in View Sheet */}
+                <div className="pt-2 border-t border-border">
+                  <Button
+                    variant="outline"
+                    className="w-full gap-2"
+                    onClick={() => {
+                      setPrintRecord(viewRecord)
+                      setPrintDialogOpen(true)
+                    }}
+                  >
+                    <Printer className="h-4 w-4" />
+                    Print Blotter Extract
+                  </Button>
                 </div>
               </div>
             </>

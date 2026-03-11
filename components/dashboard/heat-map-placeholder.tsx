@@ -1,8 +1,8 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import dynamic from "next/dynamic"
 import Link from "next/link"
+import dynamic from "next/dynamic"
 import {
   Card,
   CardContent,
@@ -36,69 +36,89 @@ const MapCanvas = dynamic(
 export function HeatMapPlaceholder() {
   const [incidents, setIncidents] = useState<IncidentPoint[]>([])
 
-  useEffect(() => {
-    async function fetch() {
-      const supabase = createSupabaseBrowser()
-      const { data } = await supabase
-        .from("incidents")
-        .select("id, blotter_number, category, severity, latitude, longitude")
-        .not("latitude", "is", null)
-        .not("longitude", "is", null)
-        .order("created_at", { ascending: false })
-        .limit(200)
+  const fetchIncidents = async () => {
+    const supabase = createSupabaseBrowser()
+    const { data } = await supabase
+      .from("incidents")
+      .select("id, blotter_number, category, severity, latitude, longitude")
+      .not("latitude", "is", null)
+      .not("longitude", "is", null)
+      .order("created_at", { ascending: false })
+      .limit(200)
 
-      if (data) {
-        setIncidents(
-          data.map((inc) => ({
-            id: inc.blotter_number || inc.id,
-            lat: inc.latitude as number,
-            lng: inc.longitude as number,
-            category: inc.category,
-            severity: inc.severity as "high" | "medium" | "low",
-          })),
-        )
-      }
+    if (data) {
+      setIncidents(
+        data.map((inc) => ({
+          id: inc.blotter_number || inc.id,
+          lat: inc.latitude as number,
+          lng: inc.longitude as number,
+          category: inc.category,
+          severity: inc.severity as "high" | "medium" | "low",
+        })),
+      )
     }
-    fetch()
+  }
+
+  useEffect(() => {
+    fetchIncidents()
+
+    // Subscribe to realtime changes on the incidents table
+    const supabase = createSupabaseBrowser()
+    const channel = supabase
+      .channel("heatmap-realtime")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "incidents" },
+        () => fetchIncidents(),
+      )
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "incidents" },
+        () => fetchIncidents(),
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
   }, [])
 
   return (
-    <Card className="shadow-sm border-border h-full">
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle className="text-sm font-semibold text-foreground font-sans">
-              Heat Map Overview
-            </CardTitle>
-            <CardDescription className="text-xs text-muted-foreground font-sans mt-0.5">
-              Geographic incident concentration
-            </CardDescription>
+    <Link href="/heatmap" className="block h-full">
+      <Card className="shadow-sm border-border h-full hover:border-primary/40 transition-colors cursor-pointer">
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-sm font-semibold text-foreground font-sans">
+                Heat Map Overview
+              </CardTitle>
+              <CardDescription className="text-xs text-muted-foreground font-sans mt-0.5">
+                Geographic incident concentration
+              </CardDescription>
+            </div>
+            <span className="inline-flex items-center rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary font-sans">
+              Live
+            </span>
           </div>
-          <span className="inline-flex items-center rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary font-sans">
-            Live
-          </span>
-        </div>
-      </CardHeader>
+        </CardHeader>
 
-      <CardContent className="pt-0">
-        <div className="rounded-lg overflow-hidden" style={{ height: 260 }}>
-          <MapCanvas
-            severities={{ high: true, medium: true, low: true }}
-            clusteringEnabled={true}
-            incidents={incidents}
-            preview
-          />
-        </div>
+        <CardContent className="pt-0">
+          <div className="rounded-lg overflow-hidden" style={{ height: 260 }}>
+            <MapCanvas
+              severities={{ high: true, medium: true, low: true }}
+              clusteringEnabled={true}
+              incidents={incidents}
+              preview
+            />
+          </div>
 
-        {/* Link to full map */}
-        <Link
-          href="/heatmap"
-          className="mt-3 flex items-center justify-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors font-sans"
-        >
-          <Map className="h-3.5 w-3.5" />
-          Open full heat map
-        </Link>
-      </CardContent>
-    </Card>
+          {/* Link hint at bottom */}
+          <div className="mt-3 flex items-center justify-center gap-1.5 text-xs text-muted-foreground font-sans">
+            <Map className="h-3.5 w-3.5" />
+            Open full heat map
+          </div>
+        </CardContent>
+      </Card>
+    </Link>
   )
 }

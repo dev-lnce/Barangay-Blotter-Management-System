@@ -31,6 +31,8 @@ import {
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Separator } from "@/components/ui/separator"
 import { cn } from "@/lib/utils"
+import { geocodeAddress } from "@/lib/geocode"
+import { logAuditEvent } from "@/lib/audit"
 
 interface NewBlotterSheetProps {
   open: boolean
@@ -59,17 +61,26 @@ const incidentTypes = [
   "Other",
 ]
 
+const genderOptions = ["Male", "Female", "Other"]
+
 export function NewBlotterSheet({ open, onOpenChange, onSuccess }: NewBlotterSheetProps) {
   const [location, setLocation] = useState("")
+  const [exactLocation, setExactLocation] = useState("")
   const [narrative, setNarrative] = useState("")
   const [files, setFiles] = useState<File[]>([])
   const [isDragOver, setIsDragOver] = useState(false)
   
-  // NEW STATE VARIABLES
   const [complainantName, setComplainantName] = useState("")
+  const [complainantAge, setComplainantAge] = useState("")
+  const [complainantGender, setComplainantGender] = useState("")
   const [incidentType, setIncidentType] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [incidentDate, setIncidentDate] = useState("")
+
+  // Respondent fields
+  const [respondentName, setRespondentName] = useState("")
+  const [respondentAge, setRespondentAge] = useState("")
+  const [respondentGender, setRespondentGender] = useState("")
 
   // Simulate duplicate detection based on location
   const showDuplicateWarning =
@@ -93,49 +104,76 @@ export function NewBlotterSheet({ open, onOpenChange, onSuccess }: NewBlotterShe
     setFiles((prev) => prev.filter((_, i) => i !== index))
   }
 
+  const resetForm = () => {
+    setComplainantName("")
+    setComplainantAge("")
+    setComplainantGender("")
+    setIncidentType("")
+    setLocation("")
+    setExactLocation("")
+    setNarrative("")
+    setIncidentDate("")
+    setRespondentName("")
+    setRespondentAge("")
+    setRespondentGender("")
+    setFiles([])
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    console.log("1. Button clicked, starting submission...")
     setIsSubmitting(true)
 
     try {
-      console.log("2. Sending data to Supabase...", { 
-        complainantName, 
-        incidentType, 
-        location, 
-        narrative 
-      })
+      // Geocode the address to get lat/lng
+      const addressString = exactLocation
+        ? `${exactLocation}, ${location}`
+        : location
+      const coords = await geocodeAddress(addressString)
+
+      const insertPayload: Record<string, any> = {
+        complainant_name: complainantName,
+        incident_type: incidentType,
+        location: location,
+        narrative: narrative,
+        status: 'Open',
+        incident_date: incidentDate || null,
+        respondent_name: respondentName || null,
+        complainant_age: complainantAge ? parseInt(complainantAge) : null,
+        complainant_gender: complainantGender || null,
+        respondent_age: respondentAge ? parseInt(respondentAge) : null,
+        respondent_gender: respondentGender || null,
+      }
+
+      // Add coordinates if geocoding succeeded
+      if (coords) {
+        insertPayload.latitude = coords.lat
+        insertPayload.longitude = coords.lng
+      }
 
       const { data, error } = await supabase
         .from('blotter_records')
-        .insert([
-          {
-            complainant_name: complainantName,
-            incident_type: incidentType,
-            location: location,
-            narrative: narrative,
-            status: 'Open',
-            incident_date: incidentDate
-          }
-        ])
+        .insert([insertPayload])
         .select()
-
-      console.log("3. Supabase responded!", { data, error })
 
       if (error) throw error
 
-      console.log("4. Success! Closing sheet...")
-      setComplainantName("")
-      setIncidentType("")
-      setLocation("")
-      setNarrative("")
+      // Log audit event
+      try {
+        await logAuditEvent({
+          action: 'Record Created',
+          details: `New blotter record created for complainant: ${complainantName}, type: ${incidentType}`,
+        })
+      } catch {
+        // Don't block the form if audit logging fails
+      }
+
+      resetForm()
       onOpenChange(false)
       if (onSuccess) onSuccess()
       
     } catch (error: any) {
       console.error("❌ Error caught:", error.message || error)
     } finally {
-      console.log("5. Finally block reached, resetting button.")
       setIsSubmitting(false)
     }
   }
@@ -184,6 +222,36 @@ export function NewBlotterSheet({ open, onOpenChange, onSuccess }: NewBlotterShe
                   className="bg-muted/50"
                 />
               </div>
+              <div className="space-y-2">
+                <Label htmlFor="complainant-age" className="text-sm font-medium">
+                  Age
+                </Label>
+                <Input
+                  id="complainant-age"
+                  type="number"
+                  placeholder="e.g., 35"
+                  min={1}
+                  max={150}
+                  className="bg-muted/50"
+                  value={complainantAge}
+                  onChange={(e) => setComplainantAge(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="complainant-gender" className="text-sm font-medium">
+                  Gender
+                </Label>
+                <Select value={complainantGender} onValueChange={setComplainantGender}>
+                  <SelectTrigger id="complainant-gender" className="bg-muted/50">
+                    <SelectValue placeholder="Select gender" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {genderOptions.map((g) => (
+                      <SelectItem key={g} value={g}>{g}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="space-y-2 sm:col-span-2">
                 <Label htmlFor="complainant-address" className="text-sm font-medium">
                   Address
@@ -216,6 +284,8 @@ export function NewBlotterSheet({ open, onOpenChange, onSuccess }: NewBlotterShe
                   id="respondent-name"
                   placeholder="e.g., Maria Santos"
                   className="bg-muted/50"
+                  value={respondentName}
+                  onChange={(e) => setRespondentName(e.target.value)}
                 />
               </div>
               <div className="space-y-2">
@@ -227,6 +297,36 @@ export function NewBlotterSheet({ open, onOpenChange, onSuccess }: NewBlotterShe
                   placeholder="e.g., 09XX XXX XXXX"
                   className="bg-muted/50"
                 />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="respondent-age" className="text-sm font-medium">
+                  Age
+                </Label>
+                <Input
+                  id="respondent-age"
+                  type="number"
+                  placeholder="e.g., 28"
+                  min={1}
+                  max={150}
+                  className="bg-muted/50"
+                  value={respondentAge}
+                  onChange={(e) => setRespondentAge(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="respondent-gender" className="text-sm font-medium">
+                  Gender
+                </Label>
+                <Select value={respondentGender} onValueChange={setRespondentGender}>
+                  <SelectTrigger id="respondent-gender" className="bg-muted/50">
+                    <SelectValue placeholder="Select gender" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {genderOptions.map((g) => (
+                      <SelectItem key={g} value={g}>{g}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-2 sm:col-span-2">
                 <Label htmlFor="respondent-address" className="text-sm font-medium">
@@ -318,7 +418,12 @@ export function NewBlotterSheet({ open, onOpenChange, onSuccess }: NewBlotterShe
                 id="exact-location"
                 placeholder="e.g., Near the basketball court on Rizal Street"
                 className="bg-muted/50"
+                value={exactLocation}
+                onChange={(e) => setExactLocation(e.target.value)}
               />
+              <p className="text-xs text-muted-foreground">
+                This will be geocoded to map coordinates automatically.
+              </p>
             </div>
 
             <div className="space-y-2">

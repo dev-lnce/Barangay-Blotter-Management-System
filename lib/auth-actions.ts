@@ -28,7 +28,18 @@ export async function signUp(formData: {
     email_confirm: true,
   })
 
-  if (authError) return { error: authError.message }
+  if (authError) {
+    // Catch duplicate email error specifically
+    if (
+      authError.message.toLowerCase().includes('already registered') ||
+      authError.message.toLowerCase().includes('already been registered') ||
+      authError.message.toLowerCase().includes('duplicate') ||
+      authError.message.toLowerCase().includes('already exists')
+    ) {
+      return { error: 'This email address is already registered. Please use a different email or sign in instead.' }
+    }
+    return { error: authError.message }
+  }
 
   // 2. Create their public profile record
   const { error: profileError } = await supabaseAdmin
@@ -151,6 +162,14 @@ export async function createUser(params: {
   })
 
   if (authError) {
+    if (
+      authError.message.toLowerCase().includes('already registered') ||
+      authError.message.toLowerCase().includes('already been registered') ||
+      authError.message.toLowerCase().includes('duplicate') ||
+      authError.message.toLowerCase().includes('already exists')
+    ) {
+      return { error: 'This email address is already registered. Please use a different email.' }
+    }
     return { error: authError.message }
   }
 

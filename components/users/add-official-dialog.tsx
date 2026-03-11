@@ -35,6 +35,10 @@ const roles = [
   "Brgy. Captain",
   "Secretary",
   "Desk Officer",
+  "Lupon",
+  "Kagawad",
+  "Tanod",
+  "Other (Specify)",
 ]
 
 export function AddOfficialDialog({ open, onOpenChange, onUserCreated }: AddOfficialDialogProps) {
@@ -42,10 +46,16 @@ export function AddOfficialDialog({ open, onOpenChange, onUserCreated }: AddOffi
   const [fullName, setFullName] = useState("")
   const [email, setEmail] = useState("")
   const [role, setRole] = useState("")
+  const [customRole, setCustomRole] = useState("")
   const [isDpaChecked, setIsDpaChecked] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const isFormValid = fullName.trim() !== "" && email.trim() !== "" && role !== "" && isDpaChecked
+  const effectiveRole = role === "Other (Specify)" ? customRole.trim() : role
+  const isFormValid =
+    fullName.trim() !== "" &&
+    email.trim() !== "" &&
+    effectiveRole !== "" &&
+    isDpaChecked
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -61,7 +71,7 @@ export function AddOfficialDialog({ open, onOpenChange, onUserCreated }: AddOffi
       const result = await createUser({
         fullName: fullName,
         email: email,
-        role: role,
+        role: effectiveRole,
         tempPassword: tempPassword
       })
 
@@ -73,6 +83,7 @@ export function AddOfficialDialog({ open, onOpenChange, onUserCreated }: AddOffi
       setFullName("")
       setEmail("")
       setRole("")
+      setCustomRole("")
       setIsDpaChecked(false)
       onOpenChange(false)
       
@@ -131,7 +142,10 @@ export function AddOfficialDialog({ open, onOpenChange, onUserCreated }: AddOffi
               </div>
               <div className="space-y-2">
                 <Label className="text-sm font-medium">System Role</Label>
-                <Select value={role} onValueChange={setRole}>
+                <Select value={role} onValueChange={(val) => {
+                  setRole(val)
+                  if (val !== "Other (Specify)") setCustomRole("")
+                }}>
                   <SelectTrigger className="bg-muted/50">
                     <SelectValue placeholder="Select role" />
                   </SelectTrigger>
@@ -143,6 +157,23 @@ export function AddOfficialDialog({ open, onOpenChange, onUserCreated }: AddOffi
                 </Select>
               </div>
             </div>
+
+            {/* Custom Role Input — shown when "Other (Specify)" is selected */}
+            {role === "Other (Specify)" && (
+              <div className="space-y-2">
+                <Label htmlFor="custom-role" className="text-sm font-medium">
+                  Specify Custom Role
+                </Label>
+                <Input
+                  id="custom-role"
+                  placeholder="e.g., Lupon Tagapamayapa, SK Chairman"
+                  value={customRole}
+                  onChange={(e) => setCustomRole(e.target.value)}
+                  className="bg-muted/50"
+                  autoFocus
+                />
+              </div>
+            )}
           </div>
 
           <Alert className="bg-muted/30 border-border">

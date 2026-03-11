@@ -1,11 +1,11 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Bell, Search, LogOut } from "lucide-react"
+import { Search, LogOut } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Badge } from "@/components/ui/badge"
+
 import { createSupabaseBrowser } from "@/lib/supabase-browser"
 import { signOut } from "@/lib/auth-actions"
 
@@ -50,7 +50,7 @@ export function TopHeader() {
       {/* Left: page title */}
       <div>
         <h1 className="text-base font-semibold text-foreground font-sans">Dashboard Overview</h1>
-        <p className="text-xs text-muted-foreground font-sans">Barangay San Isidro — March 2026</p>
+        <p className="text-xs text-muted-foreground font-sans">Barangay Banay-banay — March 2026</p>
       </div>
 
       {/* Right: search + bell + avatar */}
@@ -64,14 +64,7 @@ export function TopHeader() {
           />
         </div>
 
-        {/* Notifications */}
-        <Button variant="ghost" size="icon" className="relative h-9 w-9 rounded-lg">
-          <Bell className="h-4 w-4 text-muted-foreground" />
-          <Badge className="absolute -right-0.5 -top-0.5 h-4 w-4 items-center justify-center rounded-full p-0 text-[9px] bg-destructive text-destructive-foreground">
-            3
-          </Badge>
-          <span className="sr-only">Notifications</span>
-        </Button>
+
 
         {/* Logout */}
         <form action={signOut}>

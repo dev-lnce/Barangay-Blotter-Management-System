@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { supabase } from '@/lib/supabase'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts"
 
 export function ReportsLineChart() {
   const [chartData, setChartData] = useState<any[]>([])
@@ -14,18 +14,24 @@ export function ReportsLineChart() {
     async function fetchTrendData() {
       const { data } = await supabase
         .from('blotter_records')
-        .select('created_at, incident_date')
+        .select('created_at, incident_date, status')
 
       if (data) {
         const groups = data.reduce((acc: any, curr) => {
-          // Choose which date to use based on the toggle
           const rawDate = dateBasis === "created_at" ? curr.created_at : curr.incident_date
           if (!rawDate) return acc;
 
           const date = new Date(rawDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })
           
-          if (!acc[date]) acc[date] = { date, total: 0 }
+          if (!acc[date]) acc[date] = { date, total: 0, resolved: 0, unresolved: 0 }
           acc[date].total += 1
+
+          if (curr.status === "Resolved") {
+            acc[date].resolved += 1
+          } else {
+            acc[date].unresolved += 1
+          }
+
           return acc
         }, {})
 
@@ -36,7 +42,7 @@ export function ReportsLineChart() {
       }
     }
     fetchTrendData()
-  }, [dateBasis]) // Refresh chart whenever the toggle changes
+  }, [dateBasis])
 
   return (
     <Card className="shadow-sm border-border flex-1 h-full">
@@ -48,7 +54,7 @@ export function ReportsLineChart() {
           </CardDescription>
         </div>
         
-        {/* New Toggle Buttons */}
+        {/* Toggle Buttons */}
         <div className="flex items-center gap-1 rounded-lg border border-border p-0.5 bg-muted/50">
           <Button
             size="sm"
@@ -73,15 +79,37 @@ export function ReportsLineChart() {
           <LineChart data={chartData}>
             <CartesianGrid strokeDasharray="3 3" vertical={false} />
             <XAxis dataKey="date" tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
-            <YAxis tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
-            <Tooltip />
+            <YAxis tick={{ fontSize: 10 }} axisLine={false} tickLine={false} allowDecimals={false} />
+            <Tooltip
+              contentStyle={{
+                fontSize: 12,
+                borderRadius: 8,
+                border: '1px solid var(--border)',
+                background: 'var(--card)',
+              }}
+            />
+            <Legend
+              verticalAlign="top"
+              align="right"
+              iconType="circle"
+              iconSize={8}
+              wrapperStyle={{ fontSize: 11, paddingBottom: 8 }}
+            />
             <Line
               type="monotone"
-              dataKey="total"
-              stroke="oklch(0.45 0.18 255)"
+              dataKey="unresolved"
+              stroke="#f97316"
               strokeWidth={2.5}
-              dot={{ r: 4 }}
-              name="Total Reports"
+              dot={{ r: 3 }}
+              name="Unresolved"
+            />
+            <Line
+              type="monotone"
+              dataKey="resolved"
+              stroke="#22c55e"
+              strokeWidth={2.5}
+              dot={{ r: 3 }}
+              name="Resolved"
             />
           </LineChart>
         </ResponsiveContainer>

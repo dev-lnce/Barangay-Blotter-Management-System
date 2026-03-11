@@ -20,6 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { logAuditEvent } from "@/lib/audit"
 
 interface EditBlotterSheetProps {
   open: boolean
@@ -86,6 +87,16 @@ export function EditBlotterSheet({ open, onOpenChange, onSuccess, record }: Edit
         .eq('id', record.rawId) // Update ONLY the record with this specific ID
 
       if (error) throw error
+
+      // Log audit event
+      try {
+        await logAuditEvent({
+          action: 'Record Edited',
+          details: `Edited blotter record ${record.id} — complainant: ${complainantName}`,
+        })
+      } catch {
+        // Don't block the form if audit logging fails
+      }
 
       onOpenChange(false)
       if (onSuccess) onSuccess()

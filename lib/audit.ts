@@ -1,5 +1,4 @@
 import { createSupabaseBrowser } from './supabase-browser'
-import { createSupabaseServer } from './supabase-server'
 
 type ActionType =
   | 'Login'
@@ -12,6 +11,8 @@ type ActionType =
   | 'Password Reset'
   | 'User Created'
   | 'Access Revoked'
+  | 'Access Restored'
+  | 'Status Changed'
 
 type LogStatus = 'Success' | 'Warning' | 'Failed'
 
@@ -48,38 +49,4 @@ export async function logAuditEvent(params: AuditEventParams) {
     details: params.details,
     status: params.status || 'Success',
   })
-}
-
-export async function logAction(
-  action: string, 
-  details: string, 
-  status: 'Success' | 'Warning' | 'Failed' = 'Success'
-) {
-  const supabase = await createSupabaseServer()
-  
-  try {
-    const { data: { user } } = await supabase.auth.getUser()
-    
-    // Get profile name if user exists
-    let userName = "System/Guest"
-    if (user) {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('full_name')
-        .eq('id', user.id)
-        .single()
-      userName = profile?.full_name || user.email || "Unknown User"
-    }
-
-    await supabase.from('audit_logs').insert({
-      user_id: user?.id || null,
-      user_name: userName,
-      action: action,
-      details: details,
-      status: status,
-      timestamp: new Date().toISOString()
-    })
-  } catch (error) {
-    console.error("Audit log failed:", error)
-  }
 }

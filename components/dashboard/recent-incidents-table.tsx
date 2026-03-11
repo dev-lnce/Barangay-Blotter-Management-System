@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import Link from "next/link"
 import { supabase } from '@/lib/supabase'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import {
@@ -114,9 +115,9 @@ export function RecentIncidentsTable() {
               Latest 7 filed blotter entries
             </CardDescription>
           </div>
-          <span className="text-xs text-primary font-medium font-sans cursor-pointer hover:underline underline-offset-2">
+          <Link href="/incidents" className="text-xs text-primary font-medium font-sans cursor-pointer hover:underline underline-offset-2">
             View all
-          </span>
+          </Link>
         </div>
       </CardHeader>
       <CardContent className="pt-0 overflow-x-auto flex-1">
