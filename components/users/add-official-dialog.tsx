@@ -22,8 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Separator } from "@/components/ui/separator"
-import { createUser } from "@/lib/auth-actions"
+import { createSupabaseBrowser } from "@/lib/supabase-browser"
 
 interface AddOfficialDialogProps {
   open: boolean
@@ -31,252 +30,144 @@ interface AddOfficialDialogProps {
   onUserCreated?: () => void
 }
 
-const positions = [
-  { value: "captain", label: "Brgy. Captain" },
-  { value: "secretary", label: "Secretary" },
-  { value: "desk-officer", label: "Desk Officer" },
+const roles = [
+  "Brgy. Captain",
+  "Secretary",
+  "Desk Officer",
 ]
 
-function generatePassword() {
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789"
-  const symbols = "!@#$%"
-  let password = ""
-  for (let i = 0; i < 10; i++) {
-    password += chars.charAt(Math.floor(Math.random() * chars.length))
-  }
-  password += symbols.charAt(Math.floor(Math.random() * symbols.length))
-  return password
-}
-
 export function AddOfficialDialog({ open, onOpenChange, onUserCreated }: AddOfficialDialogProps) {
+  const supabase = createSupabaseBrowser()
   const [fullName, setFullName] = useState("")
-  const [position, setPosition] = useState("")
   const [email, setEmail] = useState("")
-  const [tempPassword, setTempPassword] = useState("")
-  const [copied, setCopied] = useState(false)
-  const [dpaConfirmed, setDpaConfirmed] = useState(false)
+  const [role, setRole] = useState("")
+  const [isDpaChecked, setIsDpaChecked] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [error, setError] = useState<string | null>(null)
 
-  const handleGeneratePassword = () => {
-    const newPassword = generatePassword()
-    setTempPassword(newPassword)
-    setCopied(false)
-  }
-
-  const handleCopyPassword = async () => {
-    if (tempPassword) {
-      await navigator.clipboard.writeText(tempPassword)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
-    }
-  }
+  const isFormValid = fullName.trim() !== "" && email.trim() !== "" && role !== "" && isDpaChecked
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!dpaConfirmed) return
+    if (!isFormValid) return
 
     setIsSubmitting(true)
-    setError(null)
 
     try {
-      const result = await createUser({
-        fullName,
-        email,
-        role: position,
-        tempPassword,
-      })
+      const { error } = await supabase
+        .from('profiles')
+        .insert([{
+          full_name: fullName,
+          email: email,
+          role: role,
+          status: 'Active'
+        }])
 
-      if (result.error) {
-        setError(result.error)
-        setIsSubmitting(false)
-        return
-      }
+      if (error) throw error
 
-      // Reset form and close
+      // Reset form and close on success
       setFullName("")
-      setPosition("")
       setEmail("")
-      setTempPassword("")
-      setDpaConfirmed(false)
+      setRole("")
+      setIsDpaChecked(false)
       onOpenChange(false)
-      onUserCreated?.()
-    } catch {
-      setError("An unexpected error occurred.")
+      
+      if (onUserCreated) onUserCreated() // Refreshes the table!
+
+    } catch (error: any) {
+      console.error("Error creating user:", error.message)
+      
+      // NEW: Show an alert if the email is already taken
+      if (error.message.includes("duplicate key value") || error.message.includes("profiles_email_key")) {
+        alert("This email address is already registered to another official. Please use a different email.")
+      } else {
+        alert("An error occurred while creating the user: " + error.message)
+      }
+      
     } finally {
       setIsSubmitting(false)
     }
   }
 
-  const isFormValid = fullName && position && email && tempPassword && dpaConfirmed
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
-        <DialogHeader>
-          <DialogTitle className="text-lg font-semibold text-foreground flex items-center gap-2">
-            <ShieldCheck className="h-5 w-5 text-primary" />
-            Add New Official
+      <DialogContent className="sm:max-w-[500px]">
+        <DialogHeader className="pb-4 border-b border-border">
+          <DialogTitle className="text-lg font-semibold text-foreground font-sans">
+            Add System User
           </DialogTitle>
-          <DialogDescription className="text-sm text-muted-foreground">
-            Grant system access to a barangay official. Ensure proper authorization.
+          <DialogDescription className="text-sm text-muted-foreground font-sans mt-1.5">
+            Register a new barangay official to access the Blotter Management System.
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-5 py-2">
-          {/* Error */}
-          {error && (
-            <Alert className="border-destructive/20 bg-destructive/5">
-              <AlertDescription className="text-xs text-destructive">{error}</AlertDescription>
-            </Alert>
-          )}
-
-          {/* Personal Information */}
+        <form onSubmit={handleSubmit} className="space-y-6 pt-4">
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="full-name" className="text-sm font-medium">
-                Full Name <span className="text-destructive">*</span>
-              </Label>
+              <Label htmlFor="full-name" className="text-sm font-medium">Full Name</Label>
               <Input
                 id="full-name"
-                placeholder="e.g., Juan Dela Cruz"
+                placeholder="e.g. Juan Dela Cruz"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 className="bg-muted/50"
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="position" className="text-sm font-medium">
-                Official Position <span className="text-destructive">*</span>
-              </Label>
-              <Select value={position} onValueChange={setPosition}>
-                <SelectTrigger id="position" className="bg-muted/50">
-                  <SelectValue placeholder="Select position" />
-                </SelectTrigger>
-                <SelectContent>
-                  {positions.map((pos) => (
-                    <SelectItem key={pos.value} value={pos.value}>
-                      {pos.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="email" className="text-sm font-medium">
-                Email Address <span className="text-destructive">*</span>
-              </Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="e.g., official@brgybanaybanay.gov.ph"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="bg-muted/50"
-              />
-            </div>
-          </div>
-
-          <Separator />
-
-          {/* Temporary Password */}
-          <div className="space-y-3">
-            <Label className="text-sm font-medium">
-              Temporary Password <span className="text-destructive">*</span>
-            </Label>
-            <div className="flex gap-2">
-              <div className="relative flex-1">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-sm font-medium">Email Address</Label>
                 <Input
-                  readOnly
-                  value={tempPassword}
-                  placeholder="Click generate to create password"
-                  className="bg-muted/50 font-mono text-sm pr-10"
+                  id="email"
+                  type="email"
+                  placeholder="juan@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="bg-muted/50"
                 />
-                {tempPassword && (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 hover:bg-primary/10"
-                    onClick={handleCopyPassword}
-                  >
-                    {copied ? (
-                      <Check className="h-3.5 w-3.5 text-emerald-600" />
-                    ) : (
-                      <Copy className="h-3.5 w-3.5 text-muted-foreground" />
-                    )}
-                    <span className="sr-only">Copy password</span>
-                  </Button>
-                )}
               </div>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleGeneratePassword}
-                className="gap-2 hover:bg-primary/10 hover:text-primary hover:border-primary/30"
-              >
-                <RefreshCw className="h-4 w-4" />
-                Generate
-              </Button>
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">System Role</Label>
+                <Select value={role} onValueChange={setRole}>
+                  <SelectTrigger className="bg-muted/50">
+                    <SelectValue placeholder="Select role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {roles.map((r) => (
+                      <SelectItem key={r} value={r}>{r}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-            <p className="text-xs text-muted-foreground">
-              User must change this password upon first login.
-            </p>
           </div>
 
-          <Separator />
-
-          {/* DPA Confirmation */}
-          <Alert className="border-primary/20 bg-primary/5">
-            <div className="flex items-start gap-3">
+          <Alert className="bg-muted/30 border-border">
+            <ShieldCheck className="h-4 w-4 text-primary" />
+            <div className="flex items-start gap-3 mt-0.5">
               <Checkbox
-                id="dpa-confirm"
-                checked={dpaConfirmed}
-                onCheckedChange={(checked) => setDpaConfirmed(checked === true)}
-                className="mt-0.5 border-primary/40 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                id="dpa"
+                checked={isDpaChecked}
+                onCheckedChange={(checked) => setIsDpaChecked(checked === true)}
+                className="mt-1 border-muted-foreground data-[state=checked]:bg-primary data-[state=checked]:border-primary"
               />
-              <div className="flex-1">
-                <Label
-                  htmlFor="dpa-confirm"
-                  className="text-sm font-medium text-foreground cursor-pointer leading-tight"
-                >
+              <div className="grid gap-1">
+                <Label htmlFor="dpa" className="text-sm font-semibold text-foreground cursor-pointer leading-tight">
                   Data Privacy Act Confirmation <span className="text-destructive">*</span>
                 </Label>
                 <AlertDescription className="text-xs text-muted-foreground mt-1.5 leading-relaxed">
                   I confirm this user is authorized to process sensitive personal data under the{" "}
-                  <span className="font-medium text-foreground">
-                    Data Privacy Act of 2012 (R.A. 10173)
-                  </span>
-                  . Unauthorized access is punishable by law.
+                  <span className="font-medium text-foreground">Data Privacy Act of 2012 (R.A. 10173)</span>.
                 </AlertDescription>
               </div>
             </div>
           </Alert>
 
           <DialogFooter className="gap-2 pt-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              className="hover:bg-muted"
-            >
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button
-              type="submit"
-              disabled={!isFormValid || isSubmitting}
-              className="bg-primary text-primary-foreground hover:bg-primary/90 gap-2 min-w-[140px]"
-            >
-              {isSubmitting ? (
-                <>
-                  <RefreshCw className="h-4 w-4 animate-spin" />
-                  Creating...
-                </>
-              ) : (
-                "Create Account"
-              )}
+            <Button type="submit" disabled={!isFormValid || isSubmitting}>
+              {isSubmitting ? "Creating..." : "Create Account"}
             </Button>
           </DialogFooter>
         </form>

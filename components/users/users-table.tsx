@@ -37,35 +37,45 @@ interface SystemUser {
   role: string
   email: string
   status: string
-  last_active: string
+  last_active: string | null // Allow null for new users
 }
 
 function getRoleBadge(role: string) {
-  switch (role) {
-    case "Brgy. Captain":
+  // Normalize the text to catch "Captain", "captain", or " Brgy. Captain " perfectly
+  const normalizedRole = role?.toLowerCase().trim() || ""
+
+  switch (normalizedRole) {
+    case "brgy. captain":
+    case "captain":
       return (
         <Badge className="bg-primary/10 text-primary border-primary/20 hover:bg-primary/10">
           Brgy. Captain
         </Badge>
       )
-    case "Secretary":
+    case "secretary":
       return (
         <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 hover:bg-emerald-100">
           Secretary
         </Badge>
       )
-    case "Desk Officer":
+    case "desk officer":
+    case "desk-officer":
       return (
         <Badge className="bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-100">
           Desk Officer
         </Badge>
       )
     default:
-      return <Badge variant="outline">{role}</Badge>
+      // Capitalizes the first letter as a clean fallback just in case
+      const displayRole = role ? role.charAt(0).toUpperCase() + role.slice(1) : "Unknown"
+      return <Badge variant="outline">{displayRole}</Badge>
   }
 }
 
-function formatLastActive(dateString: string) {
+// FIXED: Handle null dates for newly created users
+function formatLastActive(dateString: string | null) {
+  if (!dateString) return "Never logged in"
+
   const date = new Date(dateString)
   const now = new Date()
   const diffMs = now.getTime() - date.getTime()
@@ -94,19 +104,26 @@ export function UsersTable() {
   const [loading, setLoading] = useState(true)
 
   const fetchUsers = async () => {
+    setLoading(true)
     const supabase = createSupabaseBrowser()
-    const { data } = await supabase
+    
+    // FIXED: Added error logging and null handling for the order clause
+    const { data, error } = await supabase
       .from('profiles')
       .select('id, full_name, role, email, status, last_active')
-      .order('last_active', { ascending: false })
+      .order('last_active', { ascending: false, nullsFirst: false })
+
+    if (error) {
+      console.error("❌ Error fetching users from Supabase:", error.message)
+    }
 
     if (data) {
       setSystemUsers(data.map(u => ({
         id: u.id,
-        full_name: u.full_name,
-        role: u.role,
-        email: u.email,
-        status: u.status,
+        full_name: u.full_name || "Unknown Name",
+        role: u.role || "Unassigned",
+        email: u.email || "No Email",
+        status: u.status || "Active", // Default to Active if status is null
         last_active: u.last_active,
       })))
     }
