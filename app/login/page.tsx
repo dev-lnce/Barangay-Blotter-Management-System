@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import Image from "next/image"
-import { Shield, Eye, EyeOff, Lock, IdCard, ChevronRight } from "lucide-react"
+import { Shield, Eye, EyeOff, Lock, Mail, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -12,7 +12,7 @@ import { signIn } from "@/lib/auth-actions"
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
-  const [idNumber, setIdNumber] = useState("")
+  const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -23,7 +23,7 @@ export default function LoginPage() {
     setError(null)
 
     try {
-      const result = await signIn({ idNumber, password })
+      const result = await signIn({ email, password })
       if (result?.error) {
         setError(result.error)
       }
@@ -257,30 +257,30 @@ export default function LoginPage() {
 
             {/* Form */}
             <form onSubmit={handleSubmit} className="space-y-5">
-              {/* Official ID Number / Email */}
+              {/* Email Address */}
               <div className="space-y-2">
                 <Label
-                  htmlFor="official-id"
+                  htmlFor="email"
                   className="text-sm font-medium text-foreground"
                 >
-                  Official ID / Email
+                  Email Address
                 </Label>
                 <div className="relative">
-                  <IdCard
+                  <Mail
                     className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4"
                     style={{ color: "oklch(0.52 0.025 255)" }}
                   />
                   <Input
-                    id="official-id"
-                    type="text"
+                    id="email"
+                    type="email"
                     placeholder="e.g. officer@brgybanaybanay.gov.ph"
-                    value={idNumber}
-                    onChange={(e) => setIdNumber(e.target.value)}
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                     className={cn(
                       "pl-10 h-11 bg-background text-foreground placeholder:text-muted-foreground",
                       "focus-visible:ring-2 focus-visible:ring-primary/60 transition-all"
                     )}
-                    autoComplete="username"
+                    autoComplete="email"
                     required
                   />
                 </div>
@@ -334,7 +334,7 @@ export default function LoginPage() {
               {/* Submit */}
               <Button
                 type="submit"
-                disabled={isLoading || !idNumber || !password}
+                disabled={isLoading || !email || !password}
                 className={cn(
                   "w-full h-11 font-semibold text-sm tracking-wide transition-all duration-200",
                   "hover:opacity-90 hover:shadow-lg active:scale-[0.99]",
@@ -379,15 +379,15 @@ export default function LoginPage() {
 
             <Separator />
 
-            {/* Contact link */}
+            {/* Register link */}
             <p className="text-center text-xs text-muted-foreground">
-              Need access?{" "}
+              Don&apos;t have an account?{" "}
               <a
-                href="mailto:secretary@banaybanay2.gov.ph"
+                href="/signup"
                 className="font-medium underline underline-offset-4 transition-colors hover:text-foreground"
                 style={{ color: "oklch(0.45 0.18 255)" }}
               >
-                Contact the Brgy. Secretary.
+                Register here
               </a>
             </p>
           </div>

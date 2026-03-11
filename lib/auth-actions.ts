@@ -4,22 +4,28 @@ import { createSupabaseServer, createSupabaseAdmin } from './supabase-server'
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 
-export async function signUpOfficial(formData: { 
-  idNumber: string; 
-  password: string; 
-  fullName: string;
-  role: string;
+export async function signUp(formData: {
+  fullName: string
+  email: string
+  password: string
+  role: string
 }) {
-  const supabaseAdmin = await createSupabaseAdmin() // Use admin client to bypass RLS if needed
+  const supabaseAdmin = await createSupabaseAdmin()
+
+  // Map role values to display labels
+  const roleMap: Record<string, string> = {
+    'captain': 'Brgy. Captain',
+    'secretary': 'Secretary',
+    'desk-officer': 'Desk Officer',
+  }
+
+  const role = roleMap[formData.role] || formData.role
 
   // 1. Create the user in Supabase Auth
-  // Note: Adjust the email format based on whether you chose Option A or Option B above
-  const emailToRegister = `${formData.idNumber}@banaybanay2.gov.ph` 
-
   const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
-    email: emailToRegister,
+    email: formData.email,
     password: formData.password,
-    email_confirm: true, // Auto-confirm since an admin is creating it
+    email_confirm: true,
   })
 
   if (authError) return { error: authError.message }
@@ -29,37 +35,27 @@ export async function signUpOfficial(formData: {
     .from('profiles')
     .insert({
       id: authData.user.id,
-      id_number: formData.idNumber,
       full_name: formData.fullName,
-      role: formData.role,
-      status: 'Active'
+      email: formData.email,
+      role,
+      status: 'Active',
     })
 
   if (profileError) {
-    // Ideally, roll back the auth user creation here if the profile fails
-    return { error: "Failed to create official profile." }
+    // Roll back by deleting the auth user if profile creation fails
+    await supabaseAdmin.auth.admin.deleteUser(authData.user.id)
+    return { error: 'Failed to create profile. Please try again.' }
   }
 
   return { success: true }
 }
 
-export async function signIn(formData: { idNumber: string; password: string }) {
+export async function signIn(formData: { email: string; password: string }) {
   const supabase = await createSupabaseServer()
 
-  // 1. Look up the email associated with the ID Number
-  const { data: profile, error: profileError } = await supabase
-    .from('profiles')
-    .select('email')
-    .eq('id_number', formData.idNumber)
-    .single()
-
-  if (profileError || !profile) {
-     return { error: "Invalid ID Number or Password." }
-  }
-
-  // 2. Authenticate using the retrieved email
+  // Authenticate directly with email + password
   const { data, error } = await supabase.auth.signInWithPassword({
-    email: profile.email,
+    email: formData.email,
     password: formData.password,
   })
 
@@ -69,11 +65,11 @@ export async function signIn(formData: { idNumber: string; password: string }) {
       user_name: 'Unknown',
       user_id: '—',
       action: 'Failed Login',
-      details: `Failed attempt with ID '${formData.idNumber}'`,
+      details: `Failed attempt with email '${formData.email}'`,
       status: 'Failed',
     })
 
-    return { error: error.message }
+    return { error: 'Invalid email or password.' }
   }
 
   // Log successful login
