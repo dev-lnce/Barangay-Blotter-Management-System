@@ -5,9 +5,8 @@ import {
   MapContainer,
   TileLayer,
   CircleMarker,
-  Circle,
   Marker,
-  Popup,
+  Tooltip,
   useMap,
 } from "react-leaflet"
 import L from "leaflet"
@@ -20,7 +19,7 @@ import {
 } from "@/lib/dbscan"
 
 /* ------------------------------------------------------------------ */
-/*  Constants                                                          */
+/* Constants                                                          */
 /* ------------------------------------------------------------------ */
 
 const CENTER: [number, number] = [13.882, 121.107]
@@ -28,14 +27,8 @@ const DEFAULT_ZOOM = 15
 
 const RISK_COLORS: Record<RiskLevel, string> = {
   high: "#ef4444",   // red-500
-  medium: "#f59e0b", // amber-500
+  medium: "#ea580c", // amber-600
   low: "#22c55e",    // green-500
-}
-
-const RISK_FILLS: Record<RiskLevel, string> = {
-  high: "rgba(239,68,68,0.18)",
-  medium: "rgba(245,158,11,0.18)",
-  low: "rgba(34,197,94,0.18)",
 }
 
 const SEVERITY_COLORS: Record<string, string> = {
@@ -45,35 +38,77 @@ const SEVERITY_COLORS: Record<string, string> = {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Helper: cluster label DivIcon                                      */
+/* HELPER: Define the visual style of the clusters                   */
 /* ------------------------------------------------------------------ */
 
-function clusterIcon(cluster: HotspotCluster) {
-  const size = cluster.count >= 7 ? 44 : cluster.count >= 4 ? 36 : 28
-  const bg = RISK_COLORS[cluster.risk]
+function getClusterLabelHtml(cluster: HotspotCluster, isHovered: boolean) {
+  // Use amber for medium, red for high, green for low risk
+  const riskColor = RISK_COLORS[cluster.risk] || "#ea580c";
+  const size = isHovered ? 40 : 32; // Make it grow on hover
 
-  return L.divIcon({
-    className: "",
-    iconSize: [size, size],
-    iconAnchor: [size / 2, size / 2],
-    html: `
-      <div style="
-        width:${size}px;height:${size}px;
-        display:flex;align-items:center;justify-content:center;
-        border-radius:50%;
-        background:${bg}22;
-        border:2px solid ${bg};
-        color:${bg};
-        font-weight:700;font-size:${size > 36 ? 14 : 12}px;
-        font-family:var(--font-sans),system-ui,sans-serif;
-        box-shadow:0 0 12px ${bg}44;
-      ">${cluster.count}</div>
-    `,
-  })
+  return `
+    <div style="
+      width: ${size}px; height: ${size}px;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 50%;
+      background: ${riskColor};
+      border: 3px solid white;
+      color: white;
+      font-weight: 700; font-size: 16px; font-family: sans-serif;
+      box-shadow: 0 0 10px ${riskColor}77;
+      transition: all 0.2s ease-out;
+    ">
+      ${cluster.count}
+    </div>
+  `;
+}
+
+// Sub-component to render the hotspots with hovering tooltips
+function HotspotMarker({ cluster }: { cluster: HotspotCluster }) {
+  const [hovered, setHovered] = useState(false)
+
+  // Use Leaflet's divIcon to create a marker that uses our custom CSS/HTML
+  const icon = L.divIcon({
+    className: "hotspot-marker-icon", // removes default white square background
+    iconSize: [32, 32],
+    iconAnchor: [16, 16], // Anchor point is the center of the icon
+    html: getClusterLabelHtml(cluster, hovered),
+  });
+
+  return (
+    <Marker
+      position={[cluster.centroidLat, cluster.centroidLng]}
+      icon={icon}
+      eventHandlers={{
+        mouseover: () => setHovered(true),
+        mouseout: () => setHovered(false),
+      }}
+    >
+      <Tooltip direction="top" opacity={1} className="font-sans border-0 shadow-lg !p-0 bg-transparent">
+        <div className="bg-popover text-popover-foreground rounded-lg p-3 w-48 shadow-md border border-border">
+          <p className="text-xs font-semibold mb-2 border-b border-border pb-1">
+            Cluster — <span className="uppercase text-muted-foreground">{cluster.risk} Risk</span>
+          </p>
+          <div className="space-y-1.5 mb-2">
+            {cluster.breakdown.map((b) => (
+              <div key={b.category} className="flex justify-between text-xs">
+                <span className="text-muted-foreground">{b.category}</span>
+                <span className="font-medium">{b.count}</span>
+              </div>
+            ))}
+          </div>
+          <div className="border-t border-border pt-1 flex justify-between text-xs font-semibold">
+            <span>Total</span>
+            <span>{cluster.count}</span>
+          </div>
+        </div>
+      </Tooltip>
+    </Marker>
+  )
 }
 
 /* ------------------------------------------------------------------ */
-/*  Sub-component: Fit bounds on data change                           */
+/* Sub-component: Fit bounds on data change                           */
 /* ------------------------------------------------------------------ */
 
 function FitBounds({ points }: { points: { lat: number; lng: number }[] }) {
@@ -92,7 +127,7 @@ function FitBounds({ points }: { points: { lat: number; lng: number }[] }) {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Props                                                              */
+/* Props                                                              */
 /* ------------------------------------------------------------------ */
 
 export interface MapCanvasProps {
@@ -104,7 +139,7 @@ export interface MapCanvasProps {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Component                                                          */
+/* Component                                                          */
 /* ------------------------------------------------------------------ */
 
 export function MapCanvas({
@@ -113,19 +148,13 @@ export function MapCanvas({
   incidents = [],
   preview = false,
 }: MapCanvasProps) {
-  const [hoveredCluster, setHoveredCluster] = useState<string | null>(null)
-
-  /* --- filter by severity -------------------------------------- */
+  // Filter active severities
   const filtered = incidents.filter((i) => severities[i.severity])
 
-  /* --- DBSCAN -------------------------------------------------- */
+  // Run DBSCAN
   const { clusters, noise } = clusteringEnabled
     ? runDBSCAN(filtered)
     : { clusters: [] as HotspotCluster[], noise: filtered }
-
-  /* --- circle radius in meters --------------------------------- */
-  const circleRadius = (cluster: HotspotCluster) =>
-    Math.max(60, cluster.radius * 111_000) // degrees → approx metres
 
   return (
     <div className="relative flex-1 h-full rounded-xl border border-border overflow-hidden">
@@ -162,54 +191,10 @@ export function MapCanvas({
 
         <FitBounds points={filtered} />
 
-        {/* ---- Cluster hotspot circles ---- */}
-        {clusteringEnabled &&
-          clusters.map((cluster) => (
-            <Circle
-              key={cluster.id}
-              center={[cluster.centroidLat, cluster.centroidLng]}
-              radius={circleRadius(cluster)}
-              pathOptions={{
-                color: RISK_COLORS[cluster.risk],
-                fillColor: RISK_FILLS[cluster.risk],
-                fillOpacity: 0.45,
-                weight: 2,
-              }}
-            >
-              {/* Label marker in the center */}
-              <Marker
-                position={[cluster.centroidLat, cluster.centroidLng]}
-                icon={clusterIcon(cluster)}
-                eventHandlers={{
-                  mouseover: () => setHoveredCluster(cluster.id),
-                  mouseout: () => setHoveredCluster(null),
-                }}
-              >
-                <Popup className="font-sans" maxWidth={220}>
-                  <div className="space-y-1.5">
-                    <p className="text-xs font-semibold">
-                      Hotspot — {cluster.risk.charAt(0).toUpperCase() + cluster.risk.slice(1)} Risk
-                    </p>
-                    {cluster.breakdown.map((b) => (
-                      <div
-                        key={b.category}
-                        className="flex justify-between text-xs"
-                      >
-                        <span className="text-muted-foreground">
-                          {b.category}
-                        </span>
-                        <span className="font-medium">{b.count}</span>
-                      </div>
-                    ))}
-                    <div className="border-t pt-1 flex justify-between text-xs font-semibold">
-                      <span>Total</span>
-                      <span>{cluster.count}</span>
-                    </div>
-                  </div>
-                </Popup>
-              </Marker>
-            </Circle>
-          ))}
+        {/* ---- DBSCAN: Clusters (Numbers only, no massive circles) ---- */}
+        {clusteringEnabled && clusters.map((cluster) => (
+          <HotspotMarker key={`marker-${cluster.id}`} cluster={cluster} />
+        ))}
 
         {/* ---- Noise / individual markers ---- */}
         {(clusteringEnabled ? noise : filtered).map((point) => (
@@ -224,11 +209,12 @@ export function MapCanvas({
               weight: 1,
             }}
           >
+            {/* TOOLTIP FOR INDIVIDUAL INCIDENTS (HOVER) */}
             {!preview && (
-              <Popup className="font-sans" maxWidth={200}>
-                <div className="space-y-0.5">
-                  <p className="text-xs font-semibold">{point.id}</p>
-                  <p className="text-xs text-muted-foreground">
+              <Tooltip direction="top" opacity={1} className="font-sans border-0 shadow-lg !p-0 bg-transparent">
+                <div className="bg-popover text-popover-foreground rounded-lg border border-border p-3 w-40 shadow-md space-y-1">
+                  <p className="text-xs font-semibold border-b border-border pb-1">ID: {point.id}</p>
+                  <p className="text-xs text-muted-foreground mt-1">
                     {point.category}
                   </p>
                   <p className="text-xs capitalize">
@@ -241,7 +227,7 @@ export function MapCanvas({
                     </span>
                   </p>
                 </div>
-              </Popup>
+              </Tooltip>
             )}
           </CircleMarker>
         ))}
@@ -255,7 +241,7 @@ export function MapCanvas({
               Showing:{" "}
               <span className="font-medium text-foreground">
                 {clusteringEnabled
-                  ? `${clusters.length} hotspot${clusters.length !== 1 ? "s" : ""}, ${noise.length} isolated`
+                  ? `${clusters.length} cluster${clusters.length !== 1 ? "s" : ""}, ${noise.length} isolated`
                   : `${filtered.length} incidents`}
               </span>
             </span>

@@ -48,10 +48,12 @@ export default function HeatmapPage() {
   useEffect(() => {
     async function fetchIncidents() {
       const supabase = createSupabaseBrowser()
+
+      // 1. Fetch only the columns that actually exist in your database
       let query = supabase
-        .from("incidents")
+        .from("blotter_records")
         .select(
-          "id, blotter_number, category, severity, latitude, longitude, created_at",
+          "id, incident_type, latitude, longitude, created_at",
         )
         .not("latitude", "is", null)
         .not("longitude", "is", null)
@@ -61,20 +63,39 @@ export default function HeatmapPage() {
         query = query.gte("created_at", dateRange.start.toISOString())
       }
       if (dateRange.end) {
-        query = query.lte("created_at", dateRange.end.toISOString())
+        // Add 1 day to the end date to ensure the whole day is included
+        const nextDay = new Date(dateRange.end)
+        nextDay.setDate(nextDay.getDate() + 1)
+        query = query.lte("created_at", nextDay.toISOString())
       }
 
-      const { data } = await query
+      const { data, error } = await query
+
+      if (error) {
+        console.error("Error fetching map data:", error)
+        return
+      }
 
       if (data) {
         setIncidents(
-          data.map((inc) => ({
-            id: inc.blotter_number || inc.id,
-            lat: inc.latitude as number,
-            lng: inc.longitude as number,
-            category: inc.category,
-            severity: inc.severity as "high" | "medium" | "low",
-          })),
+          data.map((inc) => {
+            // 2. Automatically determine severity based on the incident type
+            let computedSeverity = "low"
+            const type = inc.incident_type || ""
+            if (["Physical Assault", "Theft", "Fraud", "Domestic Dispute"].includes(type)) {
+              computedSeverity = "high"
+            } else if (["Property Damage", "Trespassing", "Verbal Abuse"].includes(type)) {
+              computedSeverity = "medium"
+            }
+
+            return {
+              id: inc.id.toString(),
+              lat: inc.latitude as number,
+              lng: inc.longitude as number,
+              category: inc.incident_type || "Unspecified",
+              severity: computedSeverity as "high" | "medium" | "low",
+            }
+          }),
         )
       }
     }

@@ -38,13 +38,13 @@ export interface DBSCANResult {
  * Run DBSCAN on a set of incident points.
  *
  * @param points  Array of lat/lng incident points
- * @param eps     Neighbourhood radius in **degrees** (default 0.002 ≈ 220 m)
- * @param minPts  Minimum cluster size (default 3)
+ * @param eps     Neighbourhood radius in **degrees** (default 0.008 ≈ 880 m)
+ * @param minPts  Minimum cluster size (default 2)
  */
 export function runDBSCAN(
   points: IncidentPoint[],
-  eps = 0.002,
-  minPts = 3,
+  eps = 0.008,
+  minPts = 2,
 ): DBSCANResult {
   if (points.length === 0) return { clusters: [], noise: [] }
 
