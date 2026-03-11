@@ -112,7 +112,7 @@ export default function LoginPage() {
                 className="text-xs font-semibold tracking-[0.15em] uppercase"
                 style={{ color: "oklch(0.65 0.08 255)" }}
               >
-                Brgy. Banay-Banay 2nd &bull; Dasmariñas City
+                Brgy. Banay-Banay 2nd &bull; San Jose
               </p>
               <h1
                 className="text-3xl font-bold leading-tight text-balance"
