@@ -165,22 +165,26 @@ export async function resetUserPassword(userId: string, userEmail: string) {
   // Also send a password reset email
   await supabaseAdmin.auth.resetPasswordForEmail(userEmail)
 
-  // Log the action
-  const { data: { user: currentUser } } = await supabase.auth.getUser()
-  if (currentUser) {
-    const { data: currentProfile } = await supabase
-      .from('profiles')
-      .select('full_name')
-      .eq('id', currentUser.id)
-      .single()
+  // SAFE AUDIT LOGGING: Wrap in try/catch to prevent "Auth session missing" crashes
+  try {
+    const { data: { user: currentUser } } = await supabase.auth.getUser()
+    if (currentUser) {
+      const { data: currentProfile } = await supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('id', currentUser.id)
+        .single()
 
-    await supabase.from('audit_logs').insert({
-      user_id: currentUser.id,
-      user_name: currentProfile?.full_name || currentUser.email || 'Unknown',
-      action: 'Password Reset',
-      details: `Reset password for ${userEmail}`,
-      status: 'Success',
-    })
+      await supabase.from('audit_logs').insert({
+        user_id: currentUser.id,
+        user_name: currentProfile?.full_name || currentUser.email || 'Unknown',
+        action: 'Password Reset',
+        details: `Reset password for ${userEmail}`,
+        status: 'Success',
+      })
+    }
+  } catch (err) {
+    console.log("Skipping audit log: No active session found.")
   }
 
   revalidatePath('/users')
@@ -197,29 +201,61 @@ export async function revokeUserAccess(userId: string, userName: string) {
     .update({ status: 'Inactive' })
     .eq('id', userId)
 
-  if (error) {
-    return { error: error.message }
-  }
+  if (error) return { error: error.message }
 
   // Ban the user in Supabase Auth
   await supabaseAdmin.auth.admin.updateUserById(userId, { ban_duration: '876000h' }) // ~100 years
 
-  // Log the action
-  const { data: { user: currentUser } } = await supabase.auth.getUser()
-  if (currentUser) {
-    const { data: currentProfile } = await supabase
-      .from('profiles')
-      .select('full_name')
-      .eq('id', currentUser.id)
-      .single()
+  // SAFE AUDIT LOGGING
+  try {
+    const { data: { user: currentUser } } = await supabase.auth.getUser()
+    if (currentUser) {
+      await supabase.from('audit_logs').insert({
+        user_id: currentUser.id,
+        user_name: currentUser.email || 'Unknown',
+        action: 'Access Revoked',
+        details: `Revoked access for ${userName}`,
+        status: 'Warning',
+      })
+    }
+  } catch (err) {
+    console.log("Skipping audit log: No active session found.")
+  }
 
-    await supabase.from('audit_logs').insert({
-      user_id: currentUser.id,
-      user_name: currentProfile?.full_name || currentUser.email || 'Unknown',
-      action: 'Access Revoked',
-      details: `Revoked access for ${userName}`,
-      status: 'Warning',
-    })
+  revalidatePath('/users')
+  return { success: true }
+}
+
+// NEW FUNCTION: To restore access when someone is already revoked
+export async function restoreUserAccess(userId: string, userName: string) {
+  const supabaseAdmin = await createSupabaseAdmin()
+  const supabase = await createSupabaseServer()
+
+  // Re-enable the user in profiles
+  const { error } = await supabaseAdmin
+    .from('profiles')
+    .update({ status: 'Active' })
+    .eq('id', userId)
+
+  if (error) return { error: error.message }
+
+  // Unban the user in Supabase Auth by removing the ban duration
+  await supabaseAdmin.auth.admin.updateUserById(userId, { ban_duration: 'none' })
+
+  // SAFE AUDIT LOGGING
+  try {
+    const { data: { user: currentUser } } = await supabase.auth.getUser()
+    if (currentUser) {
+      await supabase.from('audit_logs').insert({
+        user_id: currentUser.id,
+        user_name: currentUser.email || 'Unknown',
+        action: 'Access Restored',
+        details: `Restored access for ${userName}`,
+        status: 'Success',
+      })
+    }
+  } catch (err) {
+    console.log("Skipping audit log: No active session found.")
   }
 
   revalidatePath('/users')

@@ -6,7 +6,9 @@ import {
   MoreHorizontal,
   KeyRound,
   ShieldOff,
+  ShieldCheck,
   UserPlus,
+  Trash2,
 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -29,7 +31,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { AddOfficialDialog } from "./add-official-dialog"
 import { createSupabaseBrowser } from "@/lib/supabase-browser"
-import { resetUserPassword, revokeUserAccess } from "@/lib/auth-actions"
+import { resetUserPassword, revokeUserAccess, restoreUserAccess } from "@/lib/auth-actions"
 
 interface SystemUser {
   id: string
@@ -153,9 +155,19 @@ export function UsersTable() {
     }
   }
 
-  const handleRevokeAccess = async (userId: string, userName: string) => {
+ const handleRevokeAccess = async (userId: string, userName: string) => {
     if (!confirm(`Are you sure you want to revoke access for ${userName}?`)) return
     const result = await revokeUserAccess(userId, userName)
+    if (result.error) {
+      alert(`Error: ${result.error}`)
+    } else {
+      fetchUsers()
+    }
+  }
+
+  const handleRestoreAccess = async (userId: string, userName: string) => {
+    if (!confirm(`Are you sure you want to restore access for ${userName}?`)) return
+    const result = await restoreUserAccess(userId, userName)
     if (result.error) {
       alert(`Error: ${result.error}`)
     } else {
@@ -277,13 +289,23 @@ export function UsersTable() {
                               Reset Password
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              className="gap-2 cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/10"
-                              onClick={() => handleRevokeAccess(user.id, user.full_name)}
-                            >
-                              <ShieldOff className="h-4 w-4" />
-                              Revoke Access
-                            </DropdownMenuItem>
+                            {user.status === 'Active' ? (
+                              <DropdownMenuItem
+                                className="gap-2 cursor-pointer text-orange-600 focus:text-orange-600 focus:bg-orange-50"
+                                onClick={() => handleRevokeAccess(user.id, user.full_name)}
+                              >
+                                <ShieldOff className="h-4 w-4" />
+                                Revoke Access
+                              </DropdownMenuItem>
+                            ) : (
+                              <DropdownMenuItem
+                                className="gap-2 cursor-pointer text-emerald-600 focus:text-emerald-700 focus:bg-emerald-50"
+                                onClick={() => handleRestoreAccess(user.id, user.full_name)}
+                              >
+                                <ShieldCheck className="h-4 w-4" />
+                                Restore Access
+                              </DropdownMenuItem>
+                            )}
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>

@@ -22,6 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { createUser } from "@/lib/auth-actions"
 import { createSupabaseBrowser } from "@/lib/supabase-browser"
 
 interface AddOfficialDialogProps {
@@ -53,16 +54,20 @@ export function AddOfficialDialog({ open, onOpenChange, onUserCreated }: AddOffi
     setIsSubmitting(true)
 
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .insert([{
-          full_name: fullName,
-          email: email,
-          role: role,
-          status: 'Active'
-        }])
+      // 1. Generate a temporary password that meets Supabase security requirements
+      const tempPassword = Math.random().toString(36).slice(-8) + "A1!"
 
-      if (error) throw error
+      // 2. Pass the data as a single object (matching the params in auth-actions.ts)
+      const result = await createUser({
+        fullName: fullName,
+        email: email,
+        role: role,
+        tempPassword: tempPassword
+      })
+
+      if (result && result.error) {
+        throw new Error(result.error)
+      }
 
       // Reset form and close on success
       setFullName("")
@@ -76,9 +81,8 @@ export function AddOfficialDialog({ open, onOpenChange, onUserCreated }: AddOffi
     } catch (error: any) {
       console.error("Error creating user:", error.message)
       
-      // NEW: Show an alert if the email is already taken
-      if (error.message.includes("duplicate key value") || error.message.includes("profiles_email_key")) {
-        alert("This email address is already registered to another official. Please use a different email.")
+      if (error.message.includes("duplicate") || error.message.includes("already registered")) {
+        alert("This email address is already registered. Please use a different email.")
       } else {
         alert("An error occurred while creating the user: " + error.message)
       }
