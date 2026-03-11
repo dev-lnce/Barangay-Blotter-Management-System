@@ -1,279 +1,270 @@
 "use client"
 
-import { useState } from "react"
-import { MapPin, ZoomIn, ZoomOut, Maximize2 } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { cn } from "@/lib/utils"
+import { useEffect, useRef, useState } from "react"
+import {
+  MapContainer,
+  TileLayer,
+  CircleMarker,
+  Circle,
+  Marker,
+  Popup,
+  useMap,
+} from "react-leaflet"
+import L from "leaflet"
+import { MapPin } from "lucide-react"
+import {
+  runDBSCAN,
+  type IncidentPoint,
+  type HotspotCluster,
+  type RiskLevel,
+} from "@/lib/dbscan"
 
-interface Incident {
-  id: string
-  x: number
-  y: number
-  severity: "high" | "medium" | "low"
-  type: string
+/* ------------------------------------------------------------------ */
+/*  Constants                                                          */
+/* ------------------------------------------------------------------ */
+
+const CENTER: [number, number] = [13.882, 121.107]
+const DEFAULT_ZOOM = 15
+
+const RISK_COLORS: Record<RiskLevel, string> = {
+  high: "#ef4444",   // red-500
+  medium: "#f59e0b", // amber-500
+  low: "#22c55e",    // green-500
 }
 
-interface Cluster {
-  id: string
-  x: number
-  y: number
-  count: number
-  incidents: { type: string; count: number }[]
+const RISK_FILLS: Record<RiskLevel, string> = {
+  high: "rgba(239,68,68,0.18)",
+  medium: "rgba(245,158,11,0.18)",
+  low: "rgba(34,197,94,0.18)",
 }
 
-interface MapCanvasProps {
+const SEVERITY_COLORS: Record<string, string> = {
+  high: "#ef4444",
+  medium: "#f59e0b",
+  low: "#22c55e",
+}
+
+/* ------------------------------------------------------------------ */
+/*  Helper: cluster label DivIcon                                      */
+/* ------------------------------------------------------------------ */
+
+function clusterIcon(cluster: HotspotCluster) {
+  const size = cluster.count >= 7 ? 44 : cluster.count >= 4 ? 36 : 28
+  const bg = RISK_COLORS[cluster.risk]
+
+  return L.divIcon({
+    className: "",
+    iconSize: [size, size],
+    iconAnchor: [size / 2, size / 2],
+    html: `
+      <div style="
+        width:${size}px;height:${size}px;
+        display:flex;align-items:center;justify-content:center;
+        border-radius:50%;
+        background:${bg}22;
+        border:2px solid ${bg};
+        color:${bg};
+        font-weight:700;font-size:${size > 36 ? 14 : 12}px;
+        font-family:var(--font-sans),system-ui,sans-serif;
+        box-shadow:0 0 12px ${bg}44;
+      ">${cluster.count}</div>
+    `,
+  })
+}
+
+/* ------------------------------------------------------------------ */
+/*  Sub-component: Fit bounds on data change                           */
+/* ------------------------------------------------------------------ */
+
+function FitBounds({ points }: { points: { lat: number; lng: number }[] }) {
+  const map = useMap()
+  const first = useRef(true)
+
+  useEffect(() => {
+    if (first.current && points.length > 0) {
+      const bounds = L.latLngBounds(points.map((p) => [p.lat, p.lng]))
+      map.fitBounds(bounds, { padding: [40, 40], maxZoom: 16 })
+      first.current = false
+    }
+  }, [points, map])
+
+  return null
+}
+
+/* ------------------------------------------------------------------ */
+/*  Props                                                              */
+/* ------------------------------------------------------------------ */
+
+export interface MapCanvasProps {
   severities: { high: boolean; medium: boolean; low: boolean }
   clusteringEnabled: boolean
-  incidents?: Incident[]
+  incidents?: IncidentPoint[]
+  /** If true, render a compact non-interactive preview */
+  preview?: boolean
 }
 
-const severityColors = {
-  high: "bg-[oklch(0.577_0.245_27.325)]",
-  medium: "bg-[oklch(0.78_0.18_75)]",
-  low: "bg-[oklch(0.6_0.16_155)]",
-}
+/* ------------------------------------------------------------------ */
+/*  Component                                                          */
+/* ------------------------------------------------------------------ */
 
-const severityRingColors = {
-  high: "ring-[oklch(0.577_0.245_27.325)]/40",
-  medium: "ring-[oklch(0.78_0.18_75)]/40",
-  low: "ring-[oklch(0.6_0.16_155)]/40",
-}
-
-function buildClusters(incidents: Incident[]): Cluster[] {
-  // Simple grid-based clustering
-  const gridSize = 15 // % of canvas
-  const grid: Record<string, Incident[]> = {}
-
-  incidents.forEach(inc => {
-    const gx = Math.floor(inc.x / gridSize)
-    const gy = Math.floor(inc.y / gridSize)
-    const key = `${gx}-${gy}`
-    if (!grid[key]) grid[key] = []
-    grid[key].push(inc)
-  })
-
-  return Object.entries(grid)
-    .filter(([, items]) => items.length >= 2)
-    .map(([key, items], idx) => {
-      const avgX = items.reduce((s, i) => s + i.x, 0) / items.length
-      const avgY = items.reduce((s, i) => s + i.y, 0) / items.length
-      const typeCounts: Record<string, number> = {}
-      items.forEach(i => { typeCounts[i.type] = (typeCounts[i.type] || 0) + 1 })
-
-      return {
-        id: `CLUSTER-${idx}`,
-        x: avgX,
-        y: avgY,
-        count: items.length,
-        incidents: Object.entries(typeCounts).map(([type, count]) => ({ type, count })),
-      }
-    })
-}
-
-export function MapCanvas({ severities, clusteringEnabled, incidents = [] }: MapCanvasProps) {
+export function MapCanvas({
+  severities,
+  clusteringEnabled,
+  incidents = [],
+  preview = false,
+}: MapCanvasProps) {
   const [hoveredCluster, setHoveredCluster] = useState<string | null>(null)
-  const [zoom, setZoom] = useState(1)
 
-  const filteredIncidents = incidents.filter(
-    (incident) => severities[incident.severity]
-  )
+  /* --- filter by severity -------------------------------------- */
+  const filtered = incidents.filter((i) => severities[i.severity])
 
-  const clusters = buildClusters(filteredIncidents)
+  /* --- DBSCAN -------------------------------------------------- */
+  const { clusters, noise } = clusteringEnabled
+    ? runDBSCAN(filtered)
+    : { clusters: [] as HotspotCluster[], noise: filtered }
+
+  /* --- circle radius in meters --------------------------------- */
+  const circleRadius = (cluster: HotspotCluster) =>
+    Math.max(60, cluster.radius * 111_000) // degrees → approx metres
 
   return (
-    <div className="relative flex-1 h-full bg-secondary/30 rounded-xl border border-border overflow-hidden">
-      {/* Map Header */}
-      <div className="absolute top-4 left-4 z-10 flex items-center gap-2 bg-card/95 backdrop-blur-sm rounded-lg px-3 py-2 shadow-sm border border-border">
-        <MapPin className="h-4 w-4 text-primary" />
-        <span className="text-sm font-semibold text-foreground font-sans">
-          Brgy. Banay-Banay 2nd
-        </span>
-        <span className="text-xs text-muted-foreground font-sans ml-1">
-          Incident Zones
-        </span>
-      </div>
+    <div className="relative flex-1 h-full rounded-xl border border-border overflow-hidden">
+      {/* Location Badge (full mode only) */}
+      {!preview && (
+        <div className="absolute top-4 left-4 z-[1000] flex items-center gap-2 bg-card/95 backdrop-blur-sm rounded-lg px-3 py-2 shadow-sm border border-border">
+          <MapPin className="h-4 w-4 text-primary" />
+          <span className="text-sm font-semibold text-foreground font-sans">
+            Brgy. Banay-Banay 2nd
+          </span>
+          <span className="text-xs text-muted-foreground font-sans ml-1">
+            Incident Zones
+          </span>
+        </div>
+      )}
 
-      {/* Zoom Controls */}
-      <div className="absolute top-4 right-4 z-10 flex flex-col gap-1">
-        <Button
-          variant="secondary"
-          size="icon"
-          className="h-8 w-8 shadow-sm"
-          onClick={() => setZoom((z) => Math.min(z + 0.25, 2))}
-        >
-          <ZoomIn className="h-4 w-4" />
-        </Button>
-        <Button
-          variant="secondary"
-          size="icon"
-          className="h-8 w-8 shadow-sm"
-          onClick={() => setZoom((z) => Math.max(z - 0.25, 0.5))}
-        >
-          <ZoomOut className="h-4 w-4" />
-        </Button>
-        <Button variant="secondary" size="icon" className="h-8 w-8 shadow-sm">
-          <Maximize2 className="h-4 w-4" />
-        </Button>
-      </div>
-
-      {/* Map Background with Grid */}
-      <div
-        className="absolute inset-0"
-        style={{ transform: `scale(${zoom})`, transformOrigin: "center" }}
+      {/* -------- Leaflet Map -------- */}
+      <MapContainer
+        center={CENTER}
+        zoom={DEFAULT_ZOOM}
+        zoomControl={!preview}
+        dragging={!preview}
+        scrollWheelZoom={!preview}
+        doubleClickZoom={!preview}
+        touchZoom={!preview}
+        attributionControl={false}
+        className="h-full w-full"
+        style={{ background: "var(--background)" }}
       >
-        {/* Light themed map placeholder background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-secondary/50 via-background to-secondary/30" />
-        
-        {/* Grid overlay */}
-        <svg className="absolute inset-0 w-full h-full opacity-20">
-          <defs>
-            <pattern
-              id="grid"
-              width="40"
-              height="40"
-              patternUnits="userSpaceOnUse"
-            >
-              <path
-                d="M 40 0 L 0 0 0 40"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="0.5"
-                className="text-border"
-              />
-            </pattern>
-          </defs>
-          <rect width="100%" height="100%" fill="url(#grid)" />
-        </svg>
+        <TileLayer
+          url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+          attribution='&copy; <a href="https://carto.com/">CARTO</a>'
+        />
 
-        {/* Zone labels */}
-        <div className="absolute top-[20%] left-[10%] text-[10px] font-semibold text-muted-foreground/60 uppercase tracking-wider font-sans">
-          Zone 1 - Purok Sampaguita
-        </div>
-        <div className="absolute top-[15%] right-[15%] text-[10px] font-semibold text-muted-foreground/60 uppercase tracking-wider font-sans">
-          Zone 2 - Purok Rosal
-        </div>
-        <div className="absolute bottom-[30%] left-[15%] text-[10px] font-semibold text-muted-foreground/60 uppercase tracking-wider font-sans">
-          Zone 3 - Purok Ilang-Ilang
-        </div>
-        <div className="absolute bottom-[20%] right-[20%] text-[10px] font-semibold text-muted-foreground/60 uppercase tracking-wider font-sans">
-          Zone 4 - Purok Gumamela
-        </div>
+        <FitBounds points={filtered} />
 
-        {/* Single Incident Markers */}
-        {!clusteringEnabled &&
-          filteredIncidents.map((incident) => (
-            <div
-              key={incident.id}
-              className={cn(
-                "absolute h-3 w-3 rounded-full ring-4 transition-all duration-200 hover:scale-125 cursor-pointer",
-                severityColors[incident.severity],
-                severityRingColors[incident.severity]
-              )}
-              style={{
-                left: `${incident.x}%`,
-                top: `${incident.y}%`,
-                transform: "translate(-50%, -50%)",
-              }}
-              title={`${incident.id}: ${incident.type}`}
-            />
-          ))}
-
-        {/* Cluster Markers */}
+        {/* ---- Cluster hotspot circles ---- */}
         {clusteringEnabled &&
           clusters.map((cluster) => (
-            <div
+            <Circle
               key={cluster.id}
-              className="absolute"
-              style={{
-                left: `${cluster.x}%`,
-                top: `${cluster.y}%`,
-                transform: "translate(-50%, -50%)",
+              center={[cluster.centroidLat, cluster.centroidLng]}
+              radius={circleRadius(cluster)}
+              pathOptions={{
+                color: RISK_COLORS[cluster.risk],
+                fillColor: RISK_FILLS[cluster.risk],
+                fillOpacity: 0.45,
+                weight: 2,
               }}
-              onMouseEnter={() => setHoveredCluster(cluster.id)}
-              onMouseLeave={() => setHoveredCluster(null)}
             >
-              {/* Cluster circle */}
-              <div
-                className={cn(
-                  "flex items-center justify-center rounded-full cursor-pointer transition-all duration-200",
-                  cluster.count >= 10
-                    ? "h-14 w-14 bg-[oklch(0.577_0.245_27.325)]/35 border-2 border-[oklch(0.577_0.245_27.325)]"
-                    : cluster.count >= 5
-                    ? "h-11 w-11 bg-[oklch(0.65_0.22_30)]/35 border-2 border-[oklch(0.65_0.22_30)]"
-                    : "h-9 w-9 bg-[oklch(0.78_0.18_75)]/35 border-2 border-[oklch(0.78_0.18_75)]",
-                  hoveredCluster === cluster.id && "scale-110"
-                )}
+              {/* Label marker in the center */}
+              <Marker
+                position={[cluster.centroidLat, cluster.centroidLng]}
+                icon={clusterIcon(cluster)}
+                eventHandlers={{
+                  mouseover: () => setHoveredCluster(cluster.id),
+                  mouseout: () => setHoveredCluster(null),
+                }}
               >
-                <span
-                  className={cn(
-                    "font-bold font-sans",
-                    cluster.count >= 10
-                      ? "text-sm text-[oklch(0.35_0.2_27)]"
-                      : cluster.count >= 5
-                      ? "text-xs text-[oklch(0.35_0.15_30)]"
-                      : "text-xs text-[oklch(0.4_0.12_75)]"
-                  )}
-                >
-                  {cluster.count}
-                </span>
-              </div>
-
-              {/* Tooltip */}
-              {hoveredCluster === cluster.id && (
-                <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 z-20 w-44 bg-card rounded-lg shadow-lg border border-border p-3 animate-in fade-in-0 zoom-in-95 duration-150">
-                  <p className="text-xs font-semibold text-foreground font-sans mb-2">
-                    Cluster Breakdown
-                  </p>
+                <Popup className="font-sans" maxWidth={220}>
                   <div className="space-y-1.5">
-                    {cluster.incidents.map((inc, idx) => (
+                    <p className="text-xs font-semibold">
+                      Hotspot — {cluster.risk.charAt(0).toUpperCase() + cluster.risk.slice(1)} Risk
+                    </p>
+                    {cluster.breakdown.map((b) => (
                       <div
-                        key={idx}
-                        className="flex items-center justify-between text-xs font-sans"
+                        key={b.category}
+                        className="flex justify-between text-xs"
                       >
-                        <span className="text-muted-foreground">{inc.type}</span>
-                        <span className="font-medium text-foreground">
-                          {inc.count}
+                        <span className="text-muted-foreground">
+                          {b.category}
                         </span>
+                        <span className="font-medium">{b.count}</span>
                       </div>
                     ))}
+                    <div className="border-t pt-1 flex justify-between text-xs font-semibold">
+                      <span>Total</span>
+                      <span>{cluster.count}</span>
+                    </div>
                   </div>
-                  <div className="mt-2 pt-2 border-t border-border flex items-center justify-between text-xs font-sans">
-                    <span className="text-muted-foreground">Total</span>
-                    <span className="font-semibold text-primary">
-                      {cluster.count}
-                    </span>
-                  </div>
-                  {/* Arrow */}
-                  <div className="absolute left-1/2 -translate-x-1/2 top-full w-2 h-2 bg-card border-r border-b border-border rotate-45 -mt-1" />
-                </div>
-              )}
-            </div>
+                </Popup>
+              </Marker>
+            </Circle>
           ))}
-      </div>
 
-      {/* Status Bar */}
-      <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between bg-card/95 backdrop-blur-sm rounded-lg px-4 py-2 shadow-sm border border-border">
-        <div className="flex items-center gap-4 text-xs text-muted-foreground font-sans">
-          <span>
-            Showing:{" "}
-            <span className="font-medium text-foreground">
-              {clusteringEnabled
-                ? `${clusters.length} clusters`
-                : `${filteredIncidents.length} incidents`}
+        {/* ---- Noise / individual markers ---- */}
+        {(clusteringEnabled ? noise : filtered).map((point) => (
+          <CircleMarker
+            key={point.id}
+            center={[point.lat, point.lng]}
+            radius={preview ? 4 : 6}
+            pathOptions={{
+              color: SEVERITY_COLORS[point.severity] || "#22c55e",
+              fillColor: SEVERITY_COLORS[point.severity] || "#22c55e",
+              fillOpacity: 0.7,
+              weight: 1,
+            }}
+          >
+            {!preview && (
+              <Popup className="font-sans" maxWidth={200}>
+                <div className="space-y-0.5">
+                  <p className="text-xs font-semibold">{point.id}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {point.category}
+                  </p>
+                  <p className="text-xs capitalize">
+                    Severity:{" "}
+                    <span
+                      style={{ color: SEVERITY_COLORS[point.severity] }}
+                      className="font-medium"
+                    >
+                      {point.severity}
+                    </span>
+                  </p>
+                </div>
+              </Popup>
+            )}
+          </CircleMarker>
+        ))}
+      </MapContainer>
+
+      {/* Status Bar (full mode only) */}
+      {!preview && (
+        <div className="absolute bottom-4 left-4 right-4 z-[1000] flex items-center justify-between bg-card/95 backdrop-blur-sm rounded-lg px-4 py-2 shadow-sm border border-border">
+          <div className="flex items-center gap-4 text-xs text-muted-foreground font-sans">
+            <span>
+              Showing:{" "}
+              <span className="font-medium text-foreground">
+                {clusteringEnabled
+                  ? `${clusters.length} hotspot${clusters.length !== 1 ? "s" : ""}, ${noise.length} isolated`
+                  : `${filtered.length} incidents`}
+              </span>
             </span>
-          </span>
-          <span className="text-border">|</span>
-          <span>
-            Zoom:{" "}
-            <span className="font-medium text-foreground">
-              {Math.round(zoom * 100)}%
-            </span>
-          </span>
+          </div>
+          <div className="text-xs text-muted-foreground font-sans">
+            DBSCAN: {clusteringEnabled ? "On" : "Off"}
+          </div>
         </div>
-        <div className="text-xs text-muted-foreground font-sans">
-          Last updated: Mar 10, 2026
-        </div>
-      </div>
+      )}
     </div>
   )
 }

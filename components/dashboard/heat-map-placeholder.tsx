@@ -1,7 +1,67 @@
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+"use client"
+
+import { useEffect, useState } from "react"
+import dynamic from "next/dynamic"
+import Link from "next/link"
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card"
 import { Map } from "lucide-react"
+import { createSupabaseBrowser } from "@/lib/supabase-browser"
+import type { IncidentPoint } from "@/lib/dbscan"
+
+/* Dynamically load the Leaflet map — only on the client */
+const MapCanvas = dynamic(
+  () =>
+    import("@/components/heatmap/map-canvas").then((mod) => mod.MapCanvas),
+  {
+    ssr: false,
+    loading: () => (
+      <div
+        className="flex items-center justify-center rounded-lg bg-muted/60 border border-dashed border-border"
+        style={{ height: 260 }}
+      >
+        <p className="text-sm text-muted-foreground font-sans animate-pulse">
+          Loading map…
+        </p>
+      </div>
+    ),
+  },
+)
 
 export function HeatMapPlaceholder() {
+  const [incidents, setIncidents] = useState<IncidentPoint[]>([])
+
+  useEffect(() => {
+    async function fetch() {
+      const supabase = createSupabaseBrowser()
+      const { data } = await supabase
+        .from("incidents")
+        .select("id, blotter_number, category, severity, latitude, longitude")
+        .not("latitude", "is", null)
+        .not("longitude", "is", null)
+        .order("created_at", { ascending: false })
+        .limit(200)
+
+      if (data) {
+        setIncidents(
+          data.map((inc) => ({
+            id: inc.blotter_number || inc.id,
+            lat: inc.latitude as number,
+            lng: inc.longitude as number,
+            category: inc.category,
+            severity: inc.severity as "high" | "medium" | "low",
+          })),
+        )
+      }
+    }
+    fetch()
+  }, [])
+
   return (
     <Card className="shadow-sm border-border h-full">
       <CardHeader className="pb-3">
@@ -19,33 +79,25 @@ export function HeatMapPlaceholder() {
           </span>
         </div>
       </CardHeader>
+
       <CardContent className="pt-0">
-        <div
-            className="relative overflow-hidden flex flex-col items-center justify-center gap-3 rounded-lg bg-muted/60 border border-dashed border-border"
-            style={{ height: 260 }}
-            role="img"
-            aria-label="Interactive heat map loading"
-          >
-          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-muted border border-border">
-            <Map className="h-6 w-6 text-muted-foreground" aria-hidden="true" />
-          </div>
-          <div className="text-center">
-            <p className="text-sm font-medium text-muted-foreground font-sans">
-              Interactive Heat Map Loading...
-            </p>
-            <p className="text-xs text-muted-foreground/60 font-sans mt-1">
-              Geographic incident filtering will appear here
-            </p>
-          </div>
-          {/* fake grid lines to mimic a map */}
-          <div className="absolute inset-0 rounded-lg opacity-10 pointer-events-none" aria-hidden="true"
-            style={{
-              backgroundImage:
-                "linear-gradient(to right, currentColor 1px, transparent 1px), linear-gradient(to bottom, currentColor 1px, transparent 1px)",
-              backgroundSize: "32px 32px",
-            }}
+        <div className="rounded-lg overflow-hidden" style={{ height: 260 }}>
+          <MapCanvas
+            severities={{ high: true, medium: true, low: true }}
+            clusteringEnabled={true}
+            incidents={incidents}
+            preview
           />
         </div>
+
+        {/* Link to full map */}
+        <Link
+          href="/heatmap"
+          className="mt-3 flex items-center justify-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors font-sans"
+        >
+          <Map className="h-3.5 w-3.5" />
+          Open full heat map
+        </Link>
       </CardContent>
     </Card>
   )
