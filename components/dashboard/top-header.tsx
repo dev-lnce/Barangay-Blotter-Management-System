@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 import { createSupabaseBrowser } from "@/lib/supabase-browser"
 import { signOut } from "@/lib/auth-actions"
+import { NotificationCenter } from "@/components/dashboard/notification-center"
 
 interface UserProfile {
   full_name: string
@@ -65,6 +66,8 @@ export function TopHeader() {
         </div>
 
 
+
+        <NotificationCenter />
 
         {/* Logout */}
         <form action={signOut}>

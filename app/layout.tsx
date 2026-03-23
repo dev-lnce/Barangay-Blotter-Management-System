@@ -1,10 +1,18 @@
 import type { Metadata } from 'next'
-import { Geist, Geist_Mono } from 'next/font/google'
+import { Playfair_Display, Inter } from 'next/font/google'
+import { SessionTimeout } from "@/components/auth/session-timeout"
 import { Analytics } from '@vercel/analytics/next'
 import './globals.css'
 
-const _geist = Geist({ subsets: ["latin"] });
-const _geistMono = Geist_Mono({ subsets: ["latin"] });
+const playfair = Playfair_Display({ 
+  subsets: ["latin"], 
+  variable: '--font-playfair' 
+});
+
+const inter = Inter({ 
+  subsets: ["latin"], 
+  variable: '--font-inter' 
+});
 
 export const metadata: Metadata = {
   title: 'BarangayBlotter — Admin Dashboard',
@@ -44,8 +52,9 @@ export default function RootLayout({
           crossOrigin=""
         />
       </head>
-      <body className="font-sans antialiased">
+      <body className={`${inter.variable} ${playfair.variable} font-sans antialiased bg-background text-foreground`}>
         {children}
+        <SessionTimeout />
         <Analytics />
       </body>
     </html>

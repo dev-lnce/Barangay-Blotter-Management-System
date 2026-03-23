@@ -82,6 +82,10 @@ export function NewBlotterSheet({ open, onOpenChange, onSuccess }: NewBlotterShe
   const [respondentAge, setRespondentAge] = useState("")
   const [respondentGender, setRespondentGender] = useState("")
 
+  // Witness fields
+  const [witnessName, setWitnessName] = useState("")
+  const [witnessContact, setWitnessContact] = useState("")
+
   // Simulate duplicate detection based on location
   const showDuplicateWarning =
     location === "Zone 3, Purok Sampaguita" && narrative.length > 20
@@ -130,11 +134,15 @@ export function NewBlotterSheet({ open, onOpenChange, onSuccess }: NewBlotterShe
         : location
       const coords = await geocodeAddress(addressString)
 
+      const finalNarrative = witnessName 
+        ? `${narrative}\n\nWitness: ${witnessName}${witnessContact ? ` (${witnessContact})` : ''}`
+        : narrative;
+
       const insertPayload: Record<string, any> = {
         complainant_name: complainantName,
         incident_type: incidentType,
         location: location,
-        narrative: narrative,
+        narrative: finalNarrative,
         status: 'Open',
         incident_date: incidentDate || null,
         respondent_name: respondentName || null,
@@ -181,23 +189,23 @@ export function NewBlotterSheet({ open, onOpenChange, onSuccess }: NewBlotterShe
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="w-full sm:max-w-xl overflow-y-auto">
-        <SheetHeader className="pb-4">
-          <SheetTitle className="text-lg font-semibold text-foreground">
-            New Blotter Record
+        <SheetHeader className="pb-4 border-b border-border mb-4">
+          <SheetTitle className="text-2xl font-bold font-serif text-foreground">
+            Bagong Rekord ng Blotter
           </SheetTitle>
-          <SheetDescription className="text-sm text-muted-foreground">
+          <SheetDescription className="text-[10px] font-bold text-muted-foreground font-sans uppercase tracking-[0.15em] mt-1">
             Fill out the details below to create a new incident report.
           </SheetDescription>
         </SheetHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-8">
           {/* Complainant Details */}
           <section className="space-y-4">
-            <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-              <span className="flex h-5 w-5 items-center justify-center rounded bg-primary/10 text-primary text-xs font-bold">
+            <h3 className="text-xs font-bold font-sans uppercase tracking-[0.15em] text-foreground flex items-center gap-3">
+              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground text-[10px] font-bold shadow-sm">
                 1
               </span>
-              Complainant Details
+              Detalye ng Nagrereklamo
             </h3>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
@@ -269,11 +277,11 @@ export function NewBlotterSheet({ open, onOpenChange, onSuccess }: NewBlotterShe
 
           {/* Respondent Details */}
           <section className="space-y-4">
-            <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-              <span className="flex h-5 w-5 items-center justify-center rounded bg-primary/10 text-primary text-xs font-bold">
+            <h3 className="text-xs font-bold font-sans uppercase tracking-[0.15em] text-foreground flex items-center gap-3">
+              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground text-[10px] font-bold shadow-sm">
                 2
               </span>
-              Respondent Details
+              Detalye ng Inirereklamo
             </h3>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
@@ -341,15 +349,15 @@ export function NewBlotterSheet({ open, onOpenChange, onSuccess }: NewBlotterShe
             </div>
           </section>
 
-          <Separator />
+          <Separator className="bg-border/50" />
 
           {/* Incident Details */}
           <section className="space-y-4">
-            <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-              <span className="flex h-5 w-5 items-center justify-center rounded bg-primary/10 text-primary text-xs font-bold">
+            <h3 className="text-xs font-bold font-sans uppercase tracking-[0.15em] text-foreground flex items-center gap-3">
+              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground text-[10px] font-bold shadow-sm">
                 3
               </span>
-              Incident Details
+              Detalye ng Insidente
             </h3>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
@@ -433,13 +441,36 @@ export function NewBlotterSheet({ open, onOpenChange, onSuccess }: NewBlotterShe
               <Textarea
                 id="narrative"
                 placeholder="Provide a detailed account of what happened..."
-                className="min-h-[120px] bg-muted/50 resize-none"
+                className="min-h-[140px] bg-muted/20 border-border resize-none font-sans text-sm leading-relaxed"
                 value={narrative}
                 onChange={(e) => setNarrative(e.target.value)}
               />
-              <p className="text-xs text-muted-foreground">
-                Include all relevant details: sequence of events, parties involved, and any witnesses.
+              <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">
+                Include all relevant details: sequence of events, parties involved.
               </p>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2 pt-2">
+              <div className="space-y-2">
+                <Label htmlFor="witness-name" className="text-sm font-medium">Witness Name (Optional)</Label>
+                <Input
+                  id="witness-name"
+                  placeholder="e.g., Pedro Penduko"
+                  className="bg-muted/20 border-border"
+                  value={witnessName}
+                  onChange={(e) => setWitnessName(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="witness-contact" className="text-sm font-medium">Witness Contact</Label>
+                <Input
+                  id="witness-contact"
+                  placeholder="e.g., 09XX XXX XXXX"
+                  className="bg-muted/20 border-border"
+                  value={witnessContact}
+                  onChange={(e) => setWitnessContact(e.target.value)}
+                />
+              </div>
             </div>
 
             {/* AI Duplicate Warning */}
@@ -474,11 +505,11 @@ export function NewBlotterSheet({ open, onOpenChange, onSuccess }: NewBlotterShe
 
           {/* File Attachments */}
           <section className="space-y-4">
-            <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-              <span className="flex h-5 w-5 items-center justify-center rounded bg-primary/10 text-primary text-xs font-bold">
+            <h3 className="text-xs font-bold font-sans uppercase tracking-[0.15em] text-foreground flex items-center gap-3">
+              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground text-[10px] font-bold shadow-sm">
                 4
               </span>
-              Digital Evidence
+              Ebidensya (Digital Evidence)
             </h3>
 
             {/* Dropzone */}

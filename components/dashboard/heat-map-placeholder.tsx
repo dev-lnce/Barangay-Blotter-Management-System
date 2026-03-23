@@ -39,8 +39,8 @@ export function HeatMapPlaceholder() {
   const fetchIncidents = async () => {
     const supabase = createSupabaseBrowser()
     const { data } = await supabase
-      .from("incidents")
-      .select("id, blotter_number, category, severity, latitude, longitude")
+      .from("blotter_records")
+      .select("id, incident_type, latitude, longitude")
       .not("latitude", "is", null)
       .not("longitude", "is", null)
       .order("created_at", { ascending: false })
@@ -48,13 +48,20 @@ export function HeatMapPlaceholder() {
 
     if (data) {
       setIncidents(
-        data.map((inc) => ({
-          id: inc.blotter_number || inc.id,
-          lat: inc.latitude as number,
-          lng: inc.longitude as number,
-          category: inc.category,
-          severity: inc.severity as "high" | "medium" | "low",
-        })),
+        data.map((inc) => {
+          let severity: "high" | "medium" | "low" = "low"
+          const type = inc.incident_type || ""
+          if (["Physical Assault", "Theft", "Fraud", "Domestic Dispute"].includes(type)) severity = "high"
+          else if (["Property Damage", "Trespassing", "Verbal Abuse"].includes(type)) severity = "medium"
+
+          return {
+            id: inc.id.toString(),
+            lat: inc.latitude as number,
+            lng: inc.longitude as number,
+            category: type,
+            severity,
+          }
+        }),
       )
     }
   }
@@ -68,12 +75,12 @@ export function HeatMapPlaceholder() {
       .channel("heatmap-realtime")
       .on(
         "postgres_changes",
-        { event: "INSERT", schema: "public", table: "incidents" },
+        { event: "INSERT", schema: "public", table: "blotter_records" },
         () => fetchIncidents(),
       )
       .on(
         "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "incidents" },
+        { event: "UPDATE", schema: "public", table: "blotter_records" },
         () => fetchIncidents(),
       )
       .subscribe()

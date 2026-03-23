@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Search, Filter, Plus, MoreHorizontal, Eye, Pencil, RefreshCw, Trash2, Printer } from "lucide-react"
+import { Search, Filter, Plus, MoreHorizontal, Eye, Pencil, RefreshCw, Trash2, Printer, Clock, FileText, ShieldCheck, Download } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -14,14 +14,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
+import { cn } from "@/lib/utils"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -39,7 +32,49 @@ import {
 import { NewBlotterSheet } from "./new-blotter-sheet"
 import { EditBlotterSheet } from "./edit-blotter-sheet"
 import { PrintBlotterExtract } from "./print-blotter-extract"
+import { SummonsGenerator } from "./summons-generator"
+import { SettlementGenerator } from "./settlement-generator"
+import { IncidentTimeline, TimelineEvent } from "./incident-timeline"
 import { logAuditEvent } from "@/lib/audit"
+
+function generateMockTimeline(record: any): TimelineEvent[] {
+  if (!record) return []
+  const events: TimelineEvent[] = []
+  events.push({
+    id: "1",
+    title: "Complaint Filed",
+    description: `Report filed by ${record.complainant}.`,
+    date: record.dateReported,
+    status: "completed",
+    type: "filed"
+  })
+
+  if (record.status === "Investigating" || record.status === "Resolved") {
+    const invDate = new Date(new Date(record.dateReported).getTime() + 86400000 * 2).toISOString() 
+    events.push({
+      id: "2",
+      title: "Under Investigation",
+      description: "Desk officer started review and initial investigation.",
+      date: invDate,
+      status: record.status === "Investigating" ? "current" : "completed",
+      type: "investigated"
+    })
+  }
+
+  if (record.status === "Resolved") {
+    const resDate = new Date(new Date(record.dateReported).getTime() + 86400000 * 7).toISOString() 
+    events.push({
+      id: "3",
+      title: "Case Resolved",
+      description: "Matter has been resolved and closed.",
+      date: resDate,
+      status: "completed",
+      type: "resolved"
+    })
+  }
+
+  return events
+}
 
 const incidentTypes = [
   "All Types",
@@ -98,6 +133,18 @@ export function BlotterTable() {
   // State for Print Extract
   const [printRecord, setPrintRecord] = useState<any | null>(null)
   const [printDialogOpen, setPrintDialogOpen] = useState(false)
+
+  // State for Summons
+  const [summonsRecord, setSummonsRecord] = useState<any | null>(null)
+  const [summonsDialogOpen, setSummonsDialogOpen] = useState(false)
+
+  // State for Settlement
+  const [settlementRecord, setSettlementRecord] = useState<any | null>(null)
+  const [settlementDialogOpen, setSettlementDialogOpen] = useState(false)
+
+
+
+
 
   useEffect(() => {
     async function fetchRecords() {
@@ -217,21 +264,50 @@ export function BlotterTable() {
     return matchesSearch && matchesStatus && matchesType
   })
 
+  const exportToCsv = () => {
+    if (filteredRecords.length === 0) return
+    const headers = ["ID", "Petsa", "Nagrereklamo", "Uri ng Insidente", "Lugar", "Status", "Salaysay"]
+    const csvContent = [
+      headers.join(","),
+      ...filteredRecords.map(r => 
+        `"${r.id}","${new Date(r.dateReported).toLocaleDateString()}","${r.complainant}","${r.incidentType}","${r.location}","${r.status}","${r.narrative.replace(/"/g, '""')}"`
+      )
+    ].join("\n")
+    
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement("a")
+    link.setAttribute("href", url)
+    link.setAttribute("download", `blotter_export_${new Date().toISOString().split('T')[0]}.csv`)
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    
+    // Log audit
+    logAuditEvent({
+      action: 'Report Generated' as any,
+      details: `Exported ${filteredRecords.length} records to CSV`,
+    }).catch(() => {})
+  }
+
   return (
     <>
       <Card className="border-border shadow-sm">
         <CardHeader className="pb-4">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <CardTitle className="text-lg font-semibold text-foreground font-sans">
-              Blotter Records
+            <CardTitle className="text-2xl font-bold font-serif text-foreground">
+              Mga Rekord ng Blotter
             </CardTitle>
-            <Button
-              onClick={() => setSheetOpen(true)}
-              className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
-            >
-              <Plus className="h-4 w-4" />
-              New Blotter Record
-            </Button>
+            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+              <Button variant="outline" className="gap-2 font-sans w-full sm:w-auto text-muted-foreground hover:text-foreground border-border/60" onClick={exportToCsv}>
+                <Download className="h-4 w-4" />
+                Export
+              </Button>
+              <Button onClick={() => setSheetOpen(true)} className="gap-2 font-sans w-full sm:w-auto bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm">
+                <Plus className="h-4 w-4" />
+                Talaan
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -279,133 +355,119 @@ export function BlotterTable() {
             </Select>
           </div>
 
-          {/* Table */}
-          <div className="rounded-lg border border-border overflow-hidden">
-            <Table>
-              <TableHeader>
-                  <TableRow className="bg-muted/50 hover:bg-muted/50">
-                    <TableHead className="font-semibold text-foreground">Blotter ID</TableHead>
-                    <TableHead className="font-semibold text-foreground">Incident Date</TableHead>
-                    <TableHead className="font-semibold text-foreground">Date Reported</TableHead>
-                    <TableHead className="font-semibold text-foreground">Complainant</TableHead>
-                    <TableHead className="font-semibold text-foreground">Incident Type</TableHead>
-                    <TableHead className="font-semibold text-foreground">Location</TableHead>
-                    <TableHead className="font-semibold text-foreground">Status</TableHead>
-                    <TableHead className="font-semibold text-foreground text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-              <TableBody>
-              {isLoading ? (
-                <TableRow>
-                  <TableCell colSpan={8} className="h-24 text-center text-muted-foreground">
-                    Loading records from database...
-                  </TableCell>
-                </TableRow>
-              ) : filteredRecords.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={8} className="h-24 text-center text-muted-foreground">
-                    No records found matching your criteria.
-                  </TableCell>
-                </TableRow>
-              ) : (
-                filteredRecords.map((record) => (
-                  <TableRow key={record.id} className="hover:bg-muted/30">
-                    {/* 1. Blotter ID */}
-                    <TableCell className="font-mono text-sm text-primary font-medium">
-                      {record.id}
-                    </TableCell>
+          {/* Grid of Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6 mt-6">
+            {isLoading ? (
+              <div className="col-span-full h-32 flex items-center justify-center text-sm font-sans text-muted-foreground">
+                Loading records from database...
+              </div>
+            ) : filteredRecords.length === 0 ? (
+              <div className="col-span-full h-32 flex items-center justify-center text-sm font-sans text-muted-foreground">
+                No records found matching your criteria.
+              </div>
+            ) : (
+              filteredRecords.map((record) => {
+                // Determine Severity
+                let severityLevel = "LOW RISK"
+                let severityPercent = 30
+                let severityColor = "bg-emerald-500"
+                const type = record.incidentType || ""
+                if (["Physical Assault", "Theft", "Fraud", "Domestic Dispute"].includes(type)) {
+                  severityLevel = "HIGH RISK"
+                  severityPercent = 90
+                  severityColor = "bg-[oklch(0.577_0.245_27.325)]" // Destructive red matching CSS var
+                } else if (["Property Damage", "Trespassing", "Verbal Abuse"].includes(type)) {
+                  severityLevel = "MEDIUM RISK"
+                  severityPercent = 60
+                  severityColor = "bg-amber-500"
+                }
 
-                    {/* 2. Incident Date */}
-                    <TableCell className="text-muted-foreground">
-                      {record.incidentDate ? new Date(record.incidentDate).toLocaleDateString("en-US", {
-                        month: "short",
-                        day: "numeric",
-                        year: "numeric",
-                      }) : "N/A"}
-                    </TableCell>
+                // Determine Days Open
+                const isResolved = record.status === "Resolved"
+                const start = new Date(record.dateReported).getTime()
+                const now = new Date().getTime()
+                const diffDays = Math.max(0, Math.floor((now - start) / (1000 * 3600 * 24)))
+                const daysPercent = isResolved ? 100 : Math.min((diffDays / 30) * 100, 100)
+                const daysLabel = isResolved ? "RESOLVED" : `${diffDays} ARAW`
+                const daysColor = isResolved ? "bg-muted-foreground/40" : (diffDays > 14 ? "bg-[oklch(0.577_0.245_27.325)]" : diffDays > 7 ? "bg-amber-500" : "bg-primary")
 
-                    {/* 3. Date Reported */}
-                    <TableCell className="text-muted-foreground">
-                      {new Date(record.dateReported).toLocaleDateString("en-US", {
-                        month: "short",
-                        day: "numeric",
-                        year: "numeric",
-                      })}
-                    </TableCell>
+                // Status Badge
+                const statusText = isResolved ? "RESOLVED" : (diffDays > 14 ? "ESCALATED" : "PENDING")
+                const badgeStyle = isResolved 
+                  ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" 
+                  : statusText === "ESCALATED"
+                  ? "bg-[oklch(0.577_0.245_27.325)]/10 text-[oklch(0.577_0.245_27.325)] border-[oklch(0.577_0.245_27.325)]/20"
+                  : "bg-amber-500/10 text-amber-600 border-amber-500/20"
 
-                    {/* 4. Complainant */}
-                    <TableCell className="font-medium text-foreground">
-                      {record.complainant}
-                    </TableCell>
+                return (
+                  <Card key={record.id} className="relative bg-white rounded-xl shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] hover:shadow-lg transition-all duration-300 hover:border-primary/50 overflow-hidden flex flex-col group p-0 border border-border">
+                    <div className="absolute top-4 left-4 z-10">
+                      <span className={cn("inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-[0.1em] backdrop-blur-md border font-sans", badgeStyle)}>
+                        {statusText}
+                      </span>
+                    </div>
 
-                    {/* 5. Incident Type */}
-                    <TableCell className="text-muted-foreground">
-                      {record.incidentType}
-                    </TableCell>
+                    <div className="h-20 bg-gradient-to-br from-secondary/40 to-muted/20 border-b border-border/50 shrink-0" />
 
-                    {/* 6. Location */}
-                    <TableCell className="text-muted-foreground max-w-[180px] truncate">
-                      {record.location}
-                    </TableCell>
+                    <div className="p-5 flex flex-col flex-1">
+                      <div className="mb-auto mt-2">
+                        <h3 className="font-serif text-xl font-bold text-foreground leading-tight mb-1 line-clamp-2">{record.incidentType || "Incident"}</h3>
+                        <p className="font-mono text-[10px] text-muted-foreground tracking-widest uppercase mb-1">{record.id}</p>
+                        <p className="font-sans text-[11px] text-muted-foreground mt-2 line-clamp-1">{record.complainant} <br/> {record.location}</p>
+                      </div>
 
-                    {/* 7. Status */}
-                    <TableCell>{getStatusBadge(record.status)}</TableCell>
+                      <div className="space-y-4 mt-8">
+                        <div>
+                          <div className="flex justify-between text-[10px] font-bold uppercase tracking-[0.15em] mb-1.5 text-muted-foreground font-sans">
+                            <span>Kalubhaan</span>
+                            <span className={severityColor.replace('bg-', 'text-')}>{severityLevel}</span>
+                          </div>
+                          <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
+                            <div className={cn("h-full rounded-full transition-all duration-500", severityColor)} style={{ width: `${severityPercent}%` }} />
+                          </div>
+                        </div>
 
-                    {/* 8. Actions */}
-                    <TableCell className="text-right">
+                        <div>
+                          <div className="flex justify-between text-[10px] font-bold uppercase tracking-[0.15em] mb-1.5 text-muted-foreground font-sans">
+                            <span>Tagal Ng Kaso</span>
+                            <span>{daysLabel}</span>
+                          </div>
+                          <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
+                            <div className={cn("h-full rounded-full transition-all duration-500", daysColor)} style={{ width: `${daysPercent}%` }} />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="absolute bottom-4 right-4 z-10 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 hover:bg-muted"
-                          >
+                          <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-muted border border-border/50 bg-white/80 backdrop-blur-sm">
                             <MoreHorizontal className="h-4 w-4" />
                             <span className="sr-only">Open actions menu</span>
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-48">
-                          <DropdownMenuItem 
-                            className="gap-2 cursor-pointer"
-                            onClick={() => {
-                              setViewRecord(record)
-                              setViewSheetOpen(true)
-                            }}
-                          >
-                            <Eye className="h-4 w-4" />
-                            View Details
+                          <DropdownMenuItem className="gap-2 cursor-pointer" onClick={() => { setViewRecord(record); setViewSheetOpen(true) }}>
+                            <Eye className="h-4 w-4" /> View Details
                           </DropdownMenuItem>
-                          <DropdownMenuItem 
-                            className="gap-2 cursor-pointer"
-                            onClick={() => {
-                              setEditRecord(record)
-                              setEditSheetOpen(true)
-                            }}
-                          >
-                            <Pencil className="h-4 w-4" />
-                            Edit
+                          <DropdownMenuItem className="gap-2 cursor-pointer" onClick={() => { setEditRecord(record); setEditSheetOpen(true) }}>
+                            <Pencil className="h-4 w-4" /> Edit
                           </DropdownMenuItem>
-                          <DropdownMenuItem 
-                            className="gap-2 cursor-pointer"
-                            onClick={() => {
-                              setPrintRecord(record)
-                              setPrintDialogOpen(true)
-                            }}
-                          >
-                            <Printer className="h-4 w-4" />
-                            Print Extract
+                          <DropdownMenuItem className="gap-2 cursor-pointer" onClick={() => { setPrintRecord(record); setPrintDialogOpen(true) }}>
+                            <Printer className="h-4 w-4" /> Print Extract
                           </DropdownMenuItem>
-                          <DropdownMenuItem 
-                            className="gap-2 cursor-pointer text-destructive focus:bg-destructive/10 focus:text-destructive"
-                            onClick={() => handleDeleteRecord(record.rawId, record.id)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                            Delete
+                          <DropdownMenuItem className="gap-2 cursor-pointer" onClick={() => { setSummonsRecord(record); setSummonsDialogOpen(true) }}>
+                            <FileText className="h-4 w-4" /> Print Summons/Notice
+                          </DropdownMenuItem>
+                          <DropdownMenuItem className="gap-2 cursor-pointer" onClick={() => { setSettlementRecord(record); setSettlementDialogOpen(true) }}>
+                            <ShieldCheck className="h-4 w-4" /> Amicable Settlement
+                          </DropdownMenuItem>
+                          <DropdownMenuItem className="gap-2 cursor-pointer text-destructive focus:bg-destructive/10 focus:text-destructive" onClick={() => handleDeleteRecord(record.rawId, record.id)}>
+                            <Trash2 className="h-4 w-4" /> Delete
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
-                          <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
-                            Set Status
-                          </div>
+                          <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground font-sans uppercase tracking-widest">Set Status</div>
                           <DropdownMenuItem onClick={() => handleUpdateStatus(record.rawId, 'Open', record.id)}>
                             <div className="h-2 w-2 rounded-full bg-amber-500 mr-2" /> Mark as Open
                           </DropdownMenuItem>
@@ -417,12 +479,11 @@ export function BlotterTable() {
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-            </Table>
+                    </div>
+                  </Card>
+                )
+              })
+            )}
           </div>
 
           {/* Footer */}
@@ -458,6 +519,20 @@ export function BlotterTable() {
         record={printRecord}
       />
 
+      {/* Summons Generator Dialog */}
+      <SummonsGenerator
+        open={summonsDialogOpen}
+        onOpenChange={setSummonsDialogOpen}
+        record={summonsRecord}
+      />
+
+      {/* Settlement Generator Dialog */}
+      <SettlementGenerator
+        open={settlementDialogOpen}
+        onOpenChange={setSettlementDialogOpen}
+        record={settlementRecord}
+      />
+
       {/* View Record Details Sheet */}
       <Sheet open={viewSheetOpen} onOpenChange={setViewSheetOpen}>
         <SheetContent className="w-full sm:max-w-md overflow-y-auto">
@@ -483,28 +558,38 @@ export function BlotterTable() {
 
               <div className="space-y-6">
                 <div>
-                  <h4 className="text-sm font-medium text-muted-foreground mb-1">Complainant</h4>
-                  <p className="text-base font-medium text-foreground">{viewRecord.complainant}</p>
+                  <h4 className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground mb-1 font-sans">Complainant</h4>
+                  <p className="text-base font-bold text-foreground font-serif">{viewRecord.complainant}</p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <h4 className="text-sm font-medium text-muted-foreground mb-1">Incident Type</h4>
-                    <p className="text-sm font-medium text-foreground">{viewRecord.incidentType}</p>
+                    <h4 className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground mb-1 font-sans">Incident Type</h4>
+                    <p className="text-sm font-semibold text-foreground font-sans">{viewRecord.incidentType}</p>
                   </div>
                   <div>
-                    <h4 className="text-sm font-medium text-muted-foreground mb-1">Location</h4>
-                    <p className="text-sm font-medium text-foreground">{viewRecord.location}</p>
+                    <h4 className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground mb-1 font-sans">Location</h4>
+                    <p className="text-sm font-semibold text-foreground font-sans">{viewRecord.location}</p>
                   </div>
                 </div>
 
                 <div>
-                  <h4 className="text-sm font-medium text-muted-foreground mb-2">Incident Narrative</h4>
-                  <div className="bg-muted/50 p-4 rounded-lg border border-border">
-                    <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">
+                  <h4 className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground mb-2 font-sans">Incident Narrative</h4>
+                  <div className="bg-muted/30 p-5 rounded-xl border border-border/50 shadow-sm">
+                    <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed font-sans">
                       {viewRecord.narrative}
                     </p>
                   </div>
+                </div>
+
+                <div className="pt-4 border-t border-border">
+                  <h4 className="text-[10px] uppercase font-bold tracking-[0.15em] text-foreground mb-6 font-sans flex items-center gap-2">
+                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/10 text-primary text-[10px] font-bold">
+                      <Clock className="h-3 w-3" />
+                    </span>
+                    Case Timeline
+                  </h4>
+                  <IncidentTimeline events={generateMockTimeline(viewRecord)} />
                 </div>
 
                 {/* Print Extract Button in View Sheet */}

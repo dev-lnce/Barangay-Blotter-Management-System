@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef } from "react"
+import { useState, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -8,7 +8,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { Printer } from "lucide-react"
+import { Switch } from "@/components/ui/switch"
+import { Label } from "@/components/ui/label"
+import { Printer, FileBadge2 } from "lucide-react"
 
 interface PrintBlotterExtractProps {
   open: boolean
@@ -27,6 +29,7 @@ interface PrintBlotterExtractProps {
 
 export function PrintBlotterExtract({ open, onOpenChange, record }: PrintBlotterExtractProps) {
   const printRef = useRef<HTMLDivElement>(null)
+  const [isCertified, setIsCertified] = useState(false)
 
   if (!record) return null
 
@@ -169,9 +172,24 @@ export function PrintBlotterExtract({ open, onOpenChange, record }: PrintBlotter
             text-transform: uppercase;
             letter-spacing: 1px;
           }
+          .watermark {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-45deg);
+            font-size: 70px;
+            color: rgba(220, 38, 38, 0.12); /* Red watermark */
+            z-index: -1;
+            white-space: nowrap;
+            pointer-events: none;
+            font-weight: 900;
+            font-family: sans-serif;
+            text-transform: uppercase;
+          }
         </style>
       </head>
       <body>
+        ${isCertified ? '<div class="watermark">CERTIFIED TRUE COPY</div>' : ''}
         <div class="header">
           <div class="republic">Republic of the Philippines</div>
           <div class="province">Province of Batangas</div>
@@ -180,7 +198,7 @@ export function PrintBlotterExtract({ open, onOpenChange, record }: PrintBlotter
           <div class="office">Office of the Barangay</div>
         </div>
 
-        <div class="title">Blotter Extract</div>
+        <div class="title">${isCertified ? "CERTIFIED TRUE COPY OF BLOTTER EXTRACT" : "BLOTTER EXTRACT"}</div>
 
         <div class="meta">
           <div>
@@ -255,7 +273,9 @@ export function PrintBlotterExtract({ open, onOpenChange, record }: PrintBlotter
             <p className="text-[10px] font-semibold uppercase tracking-[3px] text-muted-foreground">Office of the Barangay</p>
           </div>
 
-          <h2 className="text-center text-sm font-bold uppercase tracking-widest underline mt-4">Blotter Extract</h2>
+          <h2 className="text-center text-sm font-bold uppercase tracking-widest underline mt-4">
+            {isCertified ? <span className="text-emerald-700">Certified True Copy of Blotter Extract</span> : "Blotter Extract"}
+          </h2>
 
           <div className="grid grid-cols-2 gap-4 text-xs mt-4">
             <div>
@@ -283,14 +303,23 @@ export function PrintBlotterExtract({ open, onOpenChange, record }: PrintBlotter
           </div>
         </div>
 
-        <div className="flex items-center justify-end gap-3 pt-4 border-t border-border">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Close
-          </Button>
-          <Button onClick={handlePrint} className="gap-2">
-            <Printer className="h-4 w-4" />
-            Print Extract
-          </Button>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-4 border-t border-border">
+          <div className="flex items-center space-x-2 bg-emerald-50 text-emerald-700 p-2 rounded-lg border border-emerald-200">
+            <Switch id="certified" checked={isCertified} onCheckedChange={setIsCertified} />
+            <Label htmlFor="certified" className="text-xs font-semibold cursor-pointer flex items-center gap-1.5 uppercase tracking-wider">
+              <FileBadge2 className="h-4 w-4" />
+              Certified True Copy
+            </Label>
+          </div>
+          <div className="flex items-center gap-3 w-full sm:w-auto">
+            <Button variant="outline" className="flex-1 sm:flex-none" onClick={() => onOpenChange(false)}>
+              Close
+            </Button>
+            <Button onClick={handlePrint} className="gap-2 flex-1 sm:flex-none">
+              <Printer className="h-4 w-4" />
+              Print
+            </Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>

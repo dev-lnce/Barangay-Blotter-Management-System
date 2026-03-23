@@ -11,6 +11,7 @@ import { ResolutionStatusDonut } from "@/components/analytics/resolution-status-
 import { LocationCorrelationChart } from "@/components/analytics/location-correlation-chart"
 import { Button } from "@/components/ui/button"
 import { FileDown, Loader2 } from "lucide-react"
+import { DILGReportDialog } from "@/components/analytics/dilg-report-dialog"
 
 export default function AnalysisPage() {
   const reportRef = useRef<HTMLDivElement>(null)
@@ -90,9 +91,12 @@ export default function AnalysisPage() {
                 Comprehensive insights into blotter trends, resolution metrics, and location patterns
               </p>
             </div>
-            <Button className="gap-2 font-sans" onClick={handleExportPDF} disabled={isExporting}>
-              {isExporting ? <><Loader2 className="h-4 w-4 animate-spin" /> Exporting…</> : <><FileDown className="h-4 w-4" /> Export Report (PDF)</>}
-            </Button>
+            <div className="flex items-center gap-2">
+              <DILGReportDialog />
+              <Button className="gap-2 font-sans" onClick={handleExportPDF} disabled={isExporting}>
+                {isExporting ? <><Loader2 className="h-4 w-4 animate-spin" /> Exporting…</> : <><FileDown className="h-4 w-4" /> Export Report (PDF)</>}
+              </Button>
+            </div>
           </div>
 
           <div ref={reportRef} className="space-y-6 bg-background p-4 rounded-lg">

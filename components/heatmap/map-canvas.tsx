@@ -17,6 +17,7 @@ import {
   type HotspotCluster,
   type RiskLevel,
 } from "@/lib/dbscan"
+import { reverseGeocode } from "@/lib/geocode"
 
 /* ------------------------------------------------------------------ */
 /* Constants                                                          */
@@ -126,6 +127,27 @@ function FitBounds({ points }: { points: { lat: number; lng: number }[] }) {
   return null
 }
 
+function ReverseGeocodedLabel({ lat, lng }: { lat: number, lng: number }) {
+  const [address, setAddress] = useState<string | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    let mounted = true
+    async function resolve() {
+      const res = await reverseGeocode(lat, lng)
+      if (mounted) {
+        setAddress(res)
+        setLoading(false)
+      }
+    }
+    resolve()
+    return () => { mounted = false }
+  }, [lat, lng])
+
+  if (loading) return <span className="animate-pulse opacity-50">Resolving street...</span>
+  return <span>{address || "Unknown Street"}</span>
+}
+
 /* ------------------------------------------------------------------ */
 /* Props                                                              */
 /* ------------------------------------------------------------------ */
@@ -214,7 +236,10 @@ export function MapCanvas({
               <Tooltip direction="top" opacity={1} className="font-sans border-0 shadow-lg !p-0 bg-transparent">
                 <div className="bg-popover text-popover-foreground rounded-lg border border-border p-3 w-40 shadow-md space-y-1">
                   <p className="text-xs font-semibold border-b border-border pb-1">ID: {point.id}</p>
-                  <p className="text-xs text-muted-foreground mt-1">
+                  <p className="text-[10px] text-muted-foreground mt-1 font-medium bg-muted/40 p-1 rounded">
+                    <ReverseGeocodedLabel lat={point.lat} lng={point.lng} />
+                  </p>
+                  <p className="text-[10px] text-primary/80 font-bold uppercase tracking-widest mt-0.5">
                     {point.category}
                   </p>
                   <p className="text-xs capitalize">

@@ -48,14 +48,14 @@ export function ReportsLineChart() {
     <Card className="shadow-sm border-border flex-1 h-full">
       <CardHeader className="flex flex-row items-start justify-between gap-4 pb-4">
         <div>
-          <CardTitle className="text-sm font-semibold text-foreground">Incident Trends</CardTitle>
-          <CardDescription className="text-xs">
-            Viewing by {dateBasis === "created_at" ? "Report Date" : "Incident Date"}
+          <CardTitle className="text-xl font-bold font-serif text-foreground">Trend ng mga Kaso</CardTitle>
+          <CardDescription className="text-[10px] font-bold text-muted-foreground font-sans uppercase tracking-[0.15em] mt-1">
+            VIEWING BY {dateBasis === "created_at" ? "REPORT DATE" : "INCIDENT DATE"}
           </CardDescription>
         </div>
         
         {/* Toggle Buttons */}
-        <div className="flex items-center gap-1 rounded-lg border border-border p-0.5 bg-muted/50">
+        <div className="flex items-center gap-1 rounded-lg border border-border p-1 bg-secondary/30">
           <Button
             size="sm"
             variant={dateBasis === "created_at" ? "default" : "ghost"}
@@ -98,17 +98,17 @@ export function ReportsLineChart() {
             <Line
               type="monotone"
               dataKey="unresolved"
-              stroke="#f97316"
-              strokeWidth={2.5}
-              dot={{ r: 3 }}
+              stroke="oklch(0.577 0.245 27.325)"
+              strokeWidth={3}
+              dot={{ r: 4, fill: "oklch(0.577 0.245 27.325)" }}
               name="Unresolved"
             />
             <Line
               type="monotone"
               dataKey="resolved"
-              stroke="#22c55e"
-              strokeWidth={2.5}
-              dot={{ r: 3 }}
+              stroke="oklch(0.62 0.15 155)"
+              strokeWidth={3}
+              dot={{ r: 4, fill: "oklch(0.62 0.15 155)" }}
               name="Resolved"
             />
           </LineChart>

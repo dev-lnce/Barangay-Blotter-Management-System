@@ -32,17 +32,16 @@ function SeverityBadge({ severity }: { severity: string }) {
 }
 
 function StatusBadge({ status }: { status: string }) {
-  // Map our database statuses to the visual representation in your mockup
   const isResolved = status === "Resolved"
-  const displayText = isResolved ? "Resolved" : "Unresolved"
+  const displayText = isResolved ? "Resolved" : "Pending"
 
   return (
     <span
       className={cn(
-        "inline-flex items-center justify-center rounded-full px-2.5 py-0.5 text-[11px] font-medium font-sans border bg-transparent",
+        "inline-flex items-center justify-center rounded-full px-3 py-1 text-[10px] font-bold font-sans uppercase tracking-[0.1em] border",
         isResolved
-          ? "text-emerald-500 border-emerald-200"
-          : "text-orange-400 border-orange-200"
+          ? "text-emerald-600 bg-emerald-50 border-emerald-200"
+          : "text-amber-600 bg-amber-50 border-amber-200"
       )}
     >
       {displayText}
@@ -105,38 +104,38 @@ export function RecentIncidentsTable() {
 
   return (
     <Card className="shadow-sm border-border h-full flex flex-col">
-      <CardHeader className="pb-4 shrink-0">
+      <CardHeader className="pb-4 shrink-0 border-b border-border/50">
         <div className="flex items-center justify-between">
           <div>
-            <CardTitle className="text-sm font-semibold text-foreground font-sans">
-              Recent Incident Reports
+            <CardTitle className="text-2xl font-bold font-serif text-foreground">
+              Mga Pinakabagong Reklamo
             </CardTitle>
-            <CardDescription className="text-xs text-muted-foreground font-sans mt-0.5">
-              Latest 7 filed blotter entries
+            <CardDescription className="text-[10px] text-muted-foreground font-sans uppercase tracking-[0.15em] font-bold mt-1">
+              {incidents.length} AKTIBONG REKORD
             </CardDescription>
           </div>
-          <Link href="/incidents" className="text-xs text-primary font-medium font-sans cursor-pointer hover:underline underline-offset-2">
-            View all
+          <Link href="/incidents" className="text-xs text-primary font-bold font-sans tracking-widest uppercase cursor-pointer hover:underline flex items-center gap-1">
+            Tingnan Lahat &rarr;
           </Link>
         </div>
       </CardHeader>
       <CardContent className="pt-0 overflow-x-auto flex-1">
         <Table>
           <TableHeader>
-            <TableRow className="hover:bg-transparent border-border">
-              <TableHead className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider font-sans whitespace-nowrap h-8">
+            <TableRow className="hover:bg-transparent border-none bg-secondary/50">
+              <TableHead className="text-[10px] font-bold text-foreground uppercase tracking-[0.15em] font-sans whitespace-nowrap h-10 px-4 first:rounded-tl-lg last:rounded-tr-lg">
                 Incident ID
               </TableHead>
-              <TableHead className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider font-sans whitespace-nowrap h-8">
+              <TableHead className="text-[10px] font-bold text-foreground uppercase tracking-[0.15em] font-sans whitespace-nowrap h-10 px-4">
                 Date
               </TableHead>
-              <TableHead className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider font-sans whitespace-nowrap h-8">
+              <TableHead className="text-[10px] font-bold text-foreground uppercase tracking-[0.15em] font-sans whitespace-nowrap h-10 px-4">
                 Category
               </TableHead>
-              <TableHead className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider font-sans whitespace-nowrap h-8">
-                Severity
+              <TableHead className="text-[10px] font-bold text-foreground uppercase tracking-[0.15em] font-sans whitespace-nowrap h-10 px-4">
+                Kalubhaan
               </TableHead>
-              <TableHead className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider font-sans whitespace-nowrap h-8">
+              <TableHead className="text-[10px] font-bold text-foreground uppercase tracking-[0.15em] font-sans whitespace-nowrap h-10 px-4 first:rounded-tl-lg last:rounded-tr-lg">
                 Status
               </TableHead>
             </TableRow>

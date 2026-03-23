@@ -3,24 +3,23 @@
 import { useEffect, useState } from "react"
 import { supabase } from '@/lib/supabase'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { FileText, CheckCircle2, AlertTriangle, MapPin, TrendingUp, TrendingDown } from "lucide-react"
+import { FileText, CheckCircle2, AlertTriangle, MapPin, TrendingUp, TrendingDown, Timer } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 export function KpiCards() {
   const [stats, setStats] = useState({
     total: 0,
     totalTrend: "+0%",
+    totalTrendDir: "neutral",
     resolutionRate: "0%",
     resolutionTrend: "+0% improvement",
-    mostCommonSeverity: "Low Risk",
-    activeCases: 0,
-    mostAffectedArea: "N/A",
-    mostAffectedSub: "No data available"
+    hotspotArea: "N/A",
+    hotspotCount: 0,
+    avgResolution: "0 Days",
   })
 
   useEffect(() => {
     async function fetchKpiData() {
-      // Fetch data for the current month and last month to calculate trends
       const now = new Date()
       const firstDayCurrentMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
       const firstDayLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString()
@@ -28,89 +27,108 @@ export function KpiCards() {
       const { data: allRecords } = await supabase.from('blotter_records').select('*')
       
       if (allRecords) {
-        // 1. Total Reports & Trend
+        // 1. Total Reports & Trend (Real-time logic fits here implicitly as we re-fetch)
         const total = allRecords.length
-        const currentMonthRecords = allRecords.filter(r => r.created_at >= firstDayCurrentMonth).length
-        const lastMonthRecords = allRecords.filter(r => r.created_at >= firstDayLastMonth && r.created_at < firstDayCurrentMonth).length
+        const currentMonthRecords = allRecords.filter(r => r.created_at >= firstDayCurrentMonth)
+        const currentMonthCount = currentMonthRecords.length
+        const lastMonthCount = allRecords.filter(r => r.created_at >= firstDayLastMonth && r.created_at < firstDayCurrentMonth).length
         
-        const totalTrendVal = lastMonthRecords > 0 
-          ? ((currentMonthRecords - lastMonthRecords) / lastMonthRecords * 100).toFixed(0) 
+        const totalTrendVal = lastMonthCount > 0 
+          ? ((currentMonthCount - lastMonthCount) / lastMonthCount * 100).toFixed(0) 
           : "0"
         const totalTrend = `${Number(totalTrendVal) >= 0 ? '+' : ''}${totalTrendVal}% from last month`
+        const totalTrendDir = Number(totalTrendVal) > 0 ? "up" : Number(totalTrendVal) < 0 ? "down" : "neutral"
 
         // 2. Resolution Rate & Trend
         const resolved = allRecords.filter(r => r.status === 'Resolved').length
         const rate = total > 0 ? ((resolved / total) * 100).toFixed(1) + "%" : "0%"
-        
-        // Simulating a 5.2% improvement trend as seen in your reference image
-        const resolutionTrend = "+5.2% improvement"
+        const resolutionTrend = "Overall Case Closure"
 
-        // 3. Most Common Severity (Logic based on incident types)
-        const highRiskTypes = ["Physical Assault", "Theft", "Fraud"]
-        const highRiskCount = allRecords.filter(r => highRiskTypes.includes(r.incident_type)).length
-        const activeCases = allRecords.filter(r => r.status !== 'Resolved').length
-        const severityLabel = highRiskCount > (total / 3) ? "High Risk" : "Medium Risk"
-
-        // 4. Most Affected Area
-        const locationCounts = allRecords.reduce((acc: any, curr) => {
-          acc[curr.location] = (acc[curr.location] || 0) + 1
+        // 3. Hotspot of the Month
+        const locationCounts = currentMonthRecords.reduce((acc: any, curr) => {
+          if (curr.location) {
+            acc[curr.location] = (acc[curr.location] || 0) + 1
+          }
           return acc
         }, {})
-        const topLocation = Object.keys(locationCounts).reduce((a, b) => 
-          locationCounts[a] > locationCounts[b] ? a : b, "N/A"
-        )
+        const topLocation = Object.keys(locationCounts).length > 0
+          ? Object.keys(locationCounts).reduce((a, b) => locationCounts[a] > locationCounts[b] ? a : b)
+          : "N/A"
+        const topLocationCount = locationCounts[topLocation] || 0
+
+        // 4. Avg Resolution Time
+        const resolvedRecords = allRecords.filter(r => r.status === 'Resolved' && r.updated_at !== r.created_at)
+        let avgDays = 0
+        if (resolvedRecords.length > 0) {
+          const totalDays = resolvedRecords.reduce((sum, r) => {
+            const diffTime = Math.abs(new Date(r.updated_at).getTime() - new Date(r.created_at).getTime())
+            return sum + Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+          }, 0)
+          avgDays = totalDays / resolvedRecords.length
+        }
 
         setStats({
           total,
           totalTrend,
+          totalTrendDir,
           resolutionRate: rate,
           resolutionTrend,
-          mostCommonSeverity: severityLabel,
-          activeCases,
-          mostAffectedArea: topLocation.split(',')[0] || "N/A",
-          mostAffectedSub: topLocation.split(',')[1]?.trim() || "Highest concentration"
+          hotspotArea: topLocation.split(',')[0],
+          hotspotCount: topLocationCount,
+          avgResolution: `${avgDays.toFixed(1)} Days`,
         })
       }
     }
     fetchKpiData()
+
+    // Real-time subscription for KPI updates
+    const channel = supabase.channel('kpi-updates')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'blotter_records' }, () => {
+        fetchKpiData()
+      })
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
   }, [])
 
   const cards = [
     { 
-      title: "Total Reports", 
+      title: "Bilang ng Insidente (Real-time)", 
       value: stats.total.toLocaleString(), 
       trend: stats.totalTrend, 
-      trendDir: "up", 
+      trendDir: stats.totalTrendDir, 
       icon: FileText, 
-      color: "text-blue-600", 
-      bg: "bg-blue-100" 
+      color: "text-primary-foreground", 
+      bg: "bg-primary" 
     },
     { 
       title: "Resolution Rate", 
       value: stats.resolutionRate, 
       trend: stats.resolutionTrend, 
-      trendDir: "up", 
-      icon: CheckCircle2, 
-      color: "text-emerald-600", 
-      bg: "bg-emerald-100" 
-    },
-    { 
-      title: "Most Common Severity", 
-      value: stats.mostCommonSeverity, 
-      trend: `${stats.activeCases} active cases currently open`, 
       trendDir: "neutral", 
-      icon: AlertTriangle, 
-      color: "text-red-600", 
-      bg: "bg-red-100" 
+      icon: CheckCircle2, 
+      color: "text-primary-foreground", 
+      bg: "bg-primary" 
     },
     { 
-      title: "Most Affected Area", 
-      value: stats.mostAffectedArea, 
-      trend: stats.mostAffectedSub, 
+      title: "Hotspot of the Month", 
+      value: stats.hotspotArea, 
+      trend: `${stats.hotspotCount} incidents this month`, 
       trendDir: "neutral", 
       icon: MapPin, 
-      color: "text-amber-600", 
-      bg: "bg-amber-100" 
+      color: "text-primary-foreground", 
+      bg: "bg-primary" 
+    },
+    { 
+      title: "Avg Resolution Time", 
+      value: stats.avgResolution, 
+      trend: "Based on resolved cases", 
+      trendDir: "neutral", 
+      icon: Timer, 
+      color: "text-primary-foreground", 
+      bg: "bg-primary" 
     },
   ]
 
@@ -119,15 +137,15 @@ export function KpiCards() {
       {cards.map((card) => (
         <Card key={card.title} className="shadow-sm border-border bg-card">
           <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-            <CardTitle className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider font-sans">
+            <CardTitle className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.15em] font-sans">
               {card.title}
             </CardTitle>
-            <div className={cn("flex h-8 w-8 items-center justify-center rounded-lg", card.bg)}>
+            <div className={cn("flex h-8 w-8 items-center justify-center rounded-full shadow-sm", card.bg)}>
               <card.icon className={cn("h-4 w-4", card.color)} />
             </div>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold text-foreground font-sans tracking-tight">{card.value}</p>
+            <p className="text-4xl font-bold text-primary font-serif tracking-tight mt-1">{card.value}</p>
             <div className="mt-2 flex items-center gap-1.5">
               {card.trendDir === "up" && <TrendingUp className="h-3 w-3 text-emerald-500" />}
               <span className={cn(

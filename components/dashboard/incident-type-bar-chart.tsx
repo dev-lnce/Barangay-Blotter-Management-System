@@ -14,14 +14,13 @@ import {
   Cell,
 } from "recharts"
 
-// Colors mapped to your globals.css chart variables
 const COLORS = [
-  "oklch(0.45 0.18 255)", // Deep Navy (Primary)
-  "oklch(0.62 0.15 200)", // Blue-Green
-  "oklch(0.72 0.17 160)", // Emerald
-  "oklch(0.8 0.16 85)",   // Yellow-Amber
-  "oklch(0.65 0.22 30)",   // Red-Orange
-  "oklch(0.52 0.025 255)", // Muted
+  "oklch(0.48 0.20 258)",
+  "oklch(0.58 0.15 230)",
+  "oklch(0.68 0.12 210)",
+  "oklch(0.78 0.08 190)",
+  "oklch(0.88 0.05 170)",
+  "oklch(0.94 0.01 250)",
 ]
 
 export function IncidentTypeBarChart() {
@@ -67,11 +66,11 @@ export function IncidentTypeBarChart() {
   return (
     <Card className="shadow-sm border-border w-full h-full flex flex-col">
       <CardHeader className="pb-4">
-        <CardTitle className="text-sm font-semibold text-foreground font-sans">
-          Types of Reports Received
+        <CardTitle className="text-xl font-bold font-serif text-foreground">
+          Mga Uri ng Reklamo
         </CardTitle>
-        <CardDescription className="text-xs text-muted-foreground font-sans mt-0.5">
-          Breakdown by incident category
+        <CardDescription className="text-[10px] font-bold text-muted-foreground font-sans uppercase tracking-[0.15em] mt-1">
+          Kategorya ng mga Insidente
         </CardDescription>
       </CardHeader>
       <CardContent className="pt-0 flex-1">

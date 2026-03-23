@@ -43,3 +43,34 @@ export async function geocodeAddress(
     return null
   }
 }
+
+export async function reverseGeocode(
+  lat: number,
+  lng: number
+): Promise<string | null> {
+  try {
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`,
+      {
+        headers: {
+          "User-Agent": "BarangayBlotterSystem/1.0",
+        },
+      }
+    )
+
+    if (!res.ok) return null
+
+    const result = await res.json()
+    if (result && result.display_name) {
+      // Return a shorter version of the address
+      const parts = result.display_name.split(",")
+      // Usually: House Number, Road, Village, City, Province
+      return parts.slice(0, 3).join(",")
+    }
+
+    return null
+  } catch (error) {
+    console.error("Reverse geocoding failed:", error)
+    return null
+  }
+}

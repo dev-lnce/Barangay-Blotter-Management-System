@@ -1,15 +1,18 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Calendar, Layers, Settings2 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Button } from "@/components/ui/button"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Calendar as CalendarComponent } from "@/components/ui/calendar"
-import { format } from "date-fns"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { cn } from "@/lib/utils"
 
 interface HeatmapControlsProps {
@@ -27,18 +30,29 @@ export function HeatmapControls({
   clusteringEnabled,
   onDateChange,
 }: HeatmapControlsProps) {
-  const [startDate, setStartDate] = useState<Date | undefined>(new Date(2026, 2, 1))
-  const [endDate, setEndDate] = useState<Date | undefined>(new Date(2026, 2, 10))
+  const [timePreset, setTimePreset] = useState("30d") // Default to 30 days
 
-  const handleStartDateChange = (date: Date | undefined) => {
-    setStartDate(date)
-    onDateChange?.(date, endDate)
-  }
-
-  const handleEndDateChange = (date: Date | undefined) => {
-    setEndDate(date)
-    onDateChange?.(startDate, date)
-  }
+  // Compute and emit date range when preset changes
+  useEffect(() => {
+    const end = new Date()
+    let start: Date | undefined
+    
+    if (timePreset === "7d") {
+      start = new Date()
+      start.setDate(end.getDate() - 7)
+    } else if (timePreset === "30d") {
+      start = new Date()
+      start.setDate(end.getDate() - 30)
+    } else if (timePreset === "6m") {
+      start = new Date()
+      start.setMonth(end.getMonth() - 6)
+    }
+    
+    // Only call if onDateChange is provided
+    if (onDateChange) {
+      onDateChange(start, start ? end : undefined)
+    }
+  }, [timePreset])
 
   return (
     <div className="flex h-full w-full flex-col gap-4 p-4 overflow-y-auto">
@@ -53,59 +67,22 @@ export function HeatmapControls({
         <CardHeader className="pb-3 pt-4 px-4">
           <CardTitle className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2 font-sans">
             <Calendar className="h-3.5 w-3.5" />
-            Date Range
+            Time Filter
           </CardTitle>
         </CardHeader>
-        <CardContent className="px-4 pb-4 space-y-3">
+        <CardContent className="px-4 pb-4">
           <div className="space-y-1.5">
-            <Label className="text-xs text-muted-foreground font-sans">From</Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className={cn(
-                    "w-full justify-start text-left font-normal h-9 text-sm font-sans",
-                    !startDate && "text-muted-foreground"
-                  )}
-                >
-                  <Calendar className="mr-2 h-3.5 w-3.5 text-muted-foreground" />
-                  {startDate ? format(startDate, "MMM dd, yyyy") : "Select date"}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <CalendarComponent
-                  mode="single"
-                  selected={startDate}
-                  onSelect={handleStartDateChange}
-                  initialFocus
-                />
-              </PopoverContent>
-            </Popover>
-          </div>
-          <div className="space-y-1.5">
-            <Label className="text-xs text-muted-foreground font-sans">To</Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className={cn(
-                    "w-full justify-start text-left font-normal h-9 text-sm font-sans",
-                    !endDate && "text-muted-foreground"
-                  )}
-                >
-                  <Calendar className="mr-2 h-3.5 w-3.5 text-muted-foreground" />
-                  {endDate ? format(endDate, "MMM dd, yyyy") : "Select date"}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <CalendarComponent
-                  mode="single"
-                  selected={endDate}
-                  onSelect={handleEndDateChange}
-                  initialFocus
-                />
-              </PopoverContent>
-            </Popover>
+            <Select value={timePreset} onValueChange={setTimePreset}>
+              <SelectTrigger className="w-full text-sm font-sans h-9">
+                <SelectValue placeholder="Select time period" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="7d">Last 7 Days</SelectItem>
+                <SelectItem value="30d">Last 30 Days</SelectItem>
+                <SelectItem value="6m">Last 6 Months</SelectItem>
+                <SelectItem value="all">All Time</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </CardContent>
       </Card>
