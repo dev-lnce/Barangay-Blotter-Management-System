@@ -12,7 +12,7 @@ function SectionHeader({ title, count, linkRef, linkText = "Tingnan Lahat" }: { 
   return (
     <div className="flex items-end justify-between mb-5 mt-10 border-b border-border pb-3">
       <div>
-        <h2 className="text-2xl font-black text-foreground font-serif tracking-wide">{title}</h2>
+        <h2 className="text-2xl font-black text-foreground font-sans tracking-wide">{title}</h2>
         {count !== undefined && (
           <p className="text-[10px] font-sans text-muted-foreground uppercase tracking-[0.2em] mt-1.5 font-bold">
             {count} Naitala

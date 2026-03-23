@@ -37,7 +37,7 @@ export function PrintBlotterExtract({ open, onOpenChange, record }: PrintBlotter
     const content = printRef.current
     if (!content) return
 
-    const printWindow = window.open("", "_blank", "width=800,height=1000")
+    const printWindow = window.open("", "_blank", "width=850,height=1100")
     if (!printWindow) return
 
     printWindow.document.write(`
@@ -46,198 +46,228 @@ export function PrintBlotterExtract({ open, onOpenChange, record }: PrintBlotter
       <head>
         <title>Blotter Extract - ${record.id}</title>
         <style>
+          @import url('https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700;900&display=swap');
+          
           @media print {
-            body { margin: 0; padding: 20mm; }
+            body { margin: 0; padding: 0; }
+            .no-print { display: none; }
           }
+          
           body {
-            font-family: 'Times New Roman', Georgia, serif;
-            color: #111;
-            max-width: 700px;
-            margin: 0 auto;
-            padding: 40px 30px;
-            line-height: 1.6;
+            font-family: 'Merriweather', 'SF Serif', Georgia, serif;
+            color: #000;
+            background: #fff;
+            margin: 0;
+            padding: 0;
+            line-height: 1.5;
           }
+
+          .print-container {
+            width: 210mm;
+            min-height: 297mm;
+            margin: 0 auto;
+            padding: 25mm;
+            box-sizing: border-box;
+            position: relative;
+          }
+
           .header {
             text-align: center;
-            border-bottom: 3px double #333;
-            padding-bottom: 16px;
-            margin-bottom: 20px;
+            border-bottom: 2px solid #000;
+            padding-bottom: 20px;
+            margin-bottom: 40px;
           }
-          .header .republic {
-            font-size: 12px;
+
+          .republic {
+            font-size: 14px;
             text-transform: uppercase;
+            font-weight: 700;
             letter-spacing: 2px;
-            margin-bottom: 4px;
           }
-          .header .province {
-            font-size: 11px;
-            margin-bottom: 2px;
-          }
-          .header .brgy {
-            font-size: 18px;
-            font-weight: bold;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin: 8px 0;
-          }
-          .header .office {
-            font-size: 13px;
-            font-weight: bold;
+
+          .office {
+            margin-top: 15px;
+            font-size: 20px;
+            font-weight: 900;
             text-transform: uppercase;
             letter-spacing: 3px;
           }
+
           .title {
             text-align: center;
-            font-size: 16px;
-            font-weight: bold;
+            font-size: 24px;
+            font-weight: 900;
             text-transform: uppercase;
-            letter-spacing: 2px;
-            margin: 24px 0;
+            letter-spacing: 4px;
+            margin: 40px 0;
             text-decoration: underline;
+            text-underline-offset: 8px;
           }
-          .meta {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 20px;
-            font-size: 13px;
+
+          .meta-grid {
+            display: grid;
+            grid-template-cols: 1fr 1fr;
+            gap: 40px;
+            margin-bottom: 30px;
           }
-          .meta-item {
-            margin-bottom: 6px;
-          }
-          .meta-label {
-            font-weight: bold;
-          }
-          .section {
-            margin-bottom: 16px;
-          }
-          .section-title {
-            font-weight: bold;
-            font-size: 13px;
+
+          .label {
+            font-size: 10px;
+            font-weight: 900;
             text-transform: uppercase;
-            border-bottom: 1px solid #999;
-            padding-bottom: 4px;
-            margin-bottom: 8px;
+            color: #555;
+            display: block;
+            margin-bottom: 4px;
           }
-          .field {
-            margin-bottom: 6px;
-            font-size: 13px;
+
+          .value {
+            font-size: 16px;
+            font-weight: 700;
           }
-          .field-label {
-            font-weight: bold;
-            display: inline;
+
+          .section {
+            margin-top: 40px;
           }
+
+          .section-title {
+            font-size: 12px;
+            font-weight: 900;
+            text-transform: uppercase;
+            border-bottom: 1px solid #000;
+            padding-bottom: 5px;
+            margin-bottom: 15px;
+          }
+
           .narrative-box {
-            border: 1px solid #ccc;
-            padding: 12px 16px;
-            font-size: 13px;
+            border: 1.5px solid #000;
+            padding: 25px;
+            font-size: 15px;
             text-align: justify;
-            min-height: 100px;
+            line-height: 1.8;
+            min-height: 250px;
             white-space: pre-wrap;
           }
+
           .footer {
-            margin-top: 50px;
-            border-top: 2px solid #333;
-            padding-top: 16px;
+            margin-top: 60px;
           }
+
           .certification {
-            font-size: 12px;
+            font-size: 14px;
             text-align: justify;
-            margin-bottom: 40px;
+            font-style: italic;
+            margin-bottom: 80px;
           }
-          .signatures {
+
+          .sig-row {
             display: flex;
             justify-content: space-between;
-            margin-top: 50px;
           }
+
           .sig-block {
             text-align: center;
-            width: 45%;
+            width: 250px;
           }
+
           .sig-line {
-            border-top: 1px solid #333;
-            padding-top: 4px;
-            font-size: 12px;
-            font-weight: bold;
-          }
-          .sig-title {
-            font-size: 11px;
-            color: #555;
-          }
-          .status-badge {
-            display: inline-block;
-            padding: 2px 10px;
-            border: 1px solid #333;
-            font-size: 11px;
-            font-weight: bold;
+            border-top: 2px solid #000;
+            padding-top: 5px;
+            font-size: 16px;
+            font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 1px;
           }
+
+          .sig-sub {
+            font-size: 11px;
+            font-weight: 700;
+            color: #444;
+          }
+
           .watermark {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%) rotate(-45deg);
-            font-size: 70px;
-            color: rgba(220, 38, 38, 0.12); /* Red watermark */
+            font-size: 100px;
+            color: rgba(0, 0, 0, 0.05);
             z-index: -1;
             white-space: nowrap;
             pointer-events: none;
             font-weight: 900;
-            font-family: sans-serif;
             text-transform: uppercase;
           }
         </style>
       </head>
       <body>
-        ${isCertified ? '<div class="watermark">CERTIFIED TRUE COPY</div>' : ''}
-        <div class="header">
-          <div class="republic">Republic of the Philippines</div>
-          <div class="province">Province of Batangas</div>
-          <div class="province">Municipality of San Jose</div>
-          <div class="brgy">Barangay Banay-banay</div>
-          <div class="office">Office of the Barangay</div>
-        </div>
-
-        <div class="title">${isCertified ? "CERTIFIED TRUE COPY OF BLOTTER EXTRACT" : "BLOTTER EXTRACT"}</div>
-
-        <div class="meta">
-          <div>
-            <div class="meta-item"><span class="meta-label">Blotter No.:</span> ${record.id}</div>
-            <div class="meta-item"><span class="meta-label">Status:</span> <span class="status-badge">${record.status}</span></div>
-          </div>
-          <div>
-            <div class="meta-item"><span class="meta-label">Date Reported:</span> ${new Date(record.dateReported).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</div>
-            <div class="meta-item"><span class="meta-label">Date of Incident:</span> ${record.incidentDate ? new Date(record.incidentDate).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }) : "N/A"}</div>
-          </div>
-        </div>
-
-        <div class="section">
-          <div class="section-title">Parties Involved</div>
-          <div class="field"><span class="field-label">Complainant:</span> ${record.complainant}</div>
-          <div class="field"><span class="field-label">Incident Type:</span> ${record.incidentType}</div>
-          <div class="field"><span class="field-label">Location:</span> ${record.location}</div>
-        </div>
-
-        <div class="section">
-          <div class="section-title">Incident Narrative</div>
-          <div class="narrative-box">${record.narrative || "No narrative provided."}</div>
-        </div>
-
-        <div class="footer">
-          <div class="certification">
-            This is to certify that the above information is a true and faithful extract from the
-            Official Barangay Blotter of Barangay Banay-banay, Municipality of San Jose,
-            Province of Batangas.
+        <div class="print-container">
+          ${isCertified ? '<div class="watermark">CERTIFIED TRUE COPY</div>' : ''}
+          <div class="header">
+            <div class="republic">Republic of the Philippines</div>
+            <div class="republic">Province of Batangas</div>
+            <div class="republic">Municipality of San Jose</div>
+            <div class="office">Office of the Punong Barangay</div>
+            <div style="font-size: 14px; italic">Barangay Banay-Banay II</div>
           </div>
 
-          <div class="signatures">
-            <div class="sig-block">
-              <div class="sig-line">_________________________</div>
-              <div class="sig-title">Requesting Party / Complainant</div>
+          <div class="title">${isCertified ? "Certified Blotter Extract" : "Blotter Extract"}</div>
+
+          <div class="meta-grid">
+            <div>
+              <span class="label">Blotter No.</span>
+              <span class="value">${record.id}</span>
             </div>
-            <div class="sig-block">
-              <div class="sig-line">_________________________</div>
-              <div class="sig-title">Punong Barangay / Authorized Officer</div>
+            <div style="text-align: right">
+              <span class="label">Status</span>
+              <span class="value" style="border: 1px solid #000; padding: 2px 10px; text-transform: uppercase">${record.status}</span>
+            </div>
+          </div>
+
+          <div class="meta-grid">
+            <div>
+              <span class="label">Date Reported</span>
+              <span class="value">${new Date(record.dateReported).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</span>
+            </div>
+            <div style="text-align: right">
+              <span class="label">Date of Incident</span>
+              <span class="value">${record.incidentDate ? new Date(record.incidentDate).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }) : "N/A"}</span>
+            </div>
+          </div>
+
+          <div class="section">
+            <div class="section-title">Parties & Location</div>
+            <div class="meta-grid">
+               <div>
+                  <span class="label">Complainant</span>
+                  <span class="value">${record.complainant}</span>
+               </div>
+               <div style="text-align: right">
+                  <span class="label">Location</span>
+                  <span class="value">${record.location}</span>
+               </div>
+            </div>
+          </div>
+
+          <div class="section">
+            <div class="section-title">Case Narrative</div>
+            <div class="narrative-box">${record.narrative || "No narrative provided."}</div>
+          </div>
+
+          <div class="footer">
+            <div class="certification">
+              This is to certify that the above information is a true and faithful extract from the
+              Official Barangay Blotter of Barangay Banay-Banay II, Municipality of San Jose,
+              Province of Batangas, maintained under my custody.
+            </div>
+
+            <div class="sig-row">
+              <div class="sig-block">
+                <div class="sig-line" style="border-top: 0"></div>
+                <div class="sig-sub"></div>
+              </div>
+              <div class="sig-block">
+                <div class="sig-line">Punong Barangay</div>
+                <div class="sig-sub">Authorized Officer</div>
+              </div>
             </div>
           </div>
         </div>

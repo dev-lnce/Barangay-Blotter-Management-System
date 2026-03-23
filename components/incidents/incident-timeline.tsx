@@ -60,7 +60,7 @@ export function IncidentTimeline({ events }: IncidentTimelineProps) {
                   month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit"
                 })}
               </span>
-              <h4 className={`text-base font-bold font-serif mb-1 ${isCurrent ? 'text-foreground' : 'text-foreground/80'}`}>
+              <h4 className={`text-base font-bold font-sans mb-1 ${isCurrent ? 'text-foreground' : 'text-foreground/80'}`}>
                 {event.title}
               </h4>
               <p className="text-sm text-muted-foreground font-sans leading-relaxed max-w-sm">

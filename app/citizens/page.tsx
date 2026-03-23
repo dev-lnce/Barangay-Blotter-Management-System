@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
 import { Sidebar } from "@/components/dashboard/sidebar"
 import { TopHeader } from "@/components/dashboard/top-header"
 import { CitizenProfileCard } from "@/components/users/citizen-profile-card"
@@ -16,6 +17,7 @@ import {
 } from "@/components/ui/select"
 
 export default function CitizensPage() {
+  const router = useRouter()
   const [citizens, setCitizens] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
@@ -92,7 +94,7 @@ export default function CitizensPage() {
           {/* Header */}
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-border pb-6">
             <div>
-              <h1 className="text-3xl font-black text-foreground font-serif tracking-tight">Direktoryo ng mga Tao</h1>
+              <h1 className="text-3xl font-black text-foreground font-sans tracking-tight">Direktoryo ng mga Tao</h1>
               <p className="text-[10px] font-sans text-muted-foreground uppercase tracking-[0.2em] mt-2 font-bold flex items-center gap-2">
                 <Users className="h-3 w-3" />
                 {citizens.length} Mga Profiling na Naitala
@@ -144,6 +146,7 @@ export default function CitizensPage() {
                 <CitizenProfileCard 
                   key={idx}
                   {...citizen}
+                  onViewDetails={() => router.push(`/citizens/${encodeURIComponent(citizen.name)}`)}
                 />
               ))}
             </div>

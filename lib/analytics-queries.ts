@@ -2,11 +2,11 @@ import { createSupabaseBrowser } from './supabase-browser'
 
 // Brand colors mapped from your globals.css
 const COLORS = [
-  "var(--color-chart-1)", // Blue
-  "var(--color-chart-2)", // Emerald
-  "var(--color-chart-3)", // Blue-Green
-  "var(--color-chart-4)", // Yellow
-  "var(--color-chart-5)", // Red
+  "var(--chart-1)", // Blue
+  "var(--chart-2)", // Emerald
+  "var(--chart-3)", // Amber
+  "var(--chart-4)", // Violet
+  "var(--chart-5)", // Rose
 ]
 
 // 1. Fetch data for the Stacked Bar Chart (Monthly Trends)
@@ -85,9 +85,9 @@ export async function getResolutionStatusBreakdown() {
 
   // Map your actual database statuses to the brand colors
   const colorMap: Record<string, string> = {
-    'Resolved': 'var(--color-chart-2)', // Green
-    'Investigating': 'var(--color-chart-1)', // Blue
-    'Open': 'var(--color-chart-5)', // Red
+    'Resolved': 'var(--chart-2)', // Green
+    'Investigating': 'var(--chart-1)', // Blue
+    'Open': 'var(--chart-5)', // Red
   }
 
   return Object.keys(counts).map(status => ({

@@ -50,7 +50,7 @@ export function SummonsGenerator({ open, onOpenChange, record }: SummonsGenerato
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle className="font-serif text-2xl text-foreground">Generate Summons</DialogTitle>
+          <DialogTitle className="font-sans text-2xl text-foreground">Generate Summons</DialogTitle>
           <DialogDescription className="font-sans text-sm tracking-wide text-muted-foreground">
             Create an official notice for mediation/hearing at the Barangay Hall.
           </DialogDescription>
@@ -92,47 +92,56 @@ export function SummonsGenerator({ open, onOpenChange, record }: SummonsGenerato
           </div>
 
           {/* Hidden Print Wrapper */}
-          <div className="hidden print:block fixed inset-0 bg-white z-[9999] p-12 text-black">
-            <div className="max-w-3xl mx-auto">
-              <div className="text-center mb-10 border-b-2 border-black pb-6">
-                <p className="text-sm uppercase tracking-widest font-bold">Republic of the Philippines</p>
-                <p className="text-sm uppercase tracking-widest font-bold">Province of Batangas</p>
-                <p className="text-sm uppercase tracking-widest font-bold">Municipality of San Jose</p>
-                <h1 className="text-2xl font-black uppercase mt-4 font-serif">Office of the Punong Barangay</h1>
-                <p className="text-lg font-serif italic mt-2">Barangay Banay-Banay II</p>
+          <div className="hidden print:block fixed inset-0 bg-white z-[9999] p-0 text-black font-sans">
+            <div className="print-container">
+              <div className="text-center mb-8 pb-4 border-b-2 border-black">
+                <p className="text-sm uppercase tracking-[0.2em] font-bold">Republic of the Philippines</p>
+                <p className="text-sm uppercase tracking-[0.2em] font-bold">Province of Batangas</p>
+                <p className="text-sm uppercase tracking-[0.2em] font-bold">Municipality of San Jose</p>
+                <div className="mt-6">
+                  <h1 className="text-2xl font-black uppercase tracking-widest">Office of the Punong Barangay</h1>
+                  <p className="text-lg italic mt-1">Barangay Banay-Banay II</p>
+                </div>
               </div>
 
-              <div className="mb-8">
-                <h2 className="text-3xl font-black text-center mb-10 font-serif tracking-widest underline underline-offset-8">PATAWAG</h2>
+              <div className="mt-12">
+                <h2 className="text-3xl font-black text-center mb-12 tracking-[0.4em] underline underline-offset-8 decoration-2">PATAWAG</h2>
                 
-                <div className="flex justify-between mb-8 font-serif">
-                  <div>
-                    <p><strong>To:</strong> {record.respondent_name || "[Pangalan ng Inirereklamo]"}</p>
-                    <p className="mt-1">Respondent</p>
+                <div className="grid grid-cols-2 gap-12 mb-10 text-base">
+                  <div className="space-y-4">
+                    <div>
+                      <span className="font-bold uppercase text-xs tracking-wider text-gray-600 block">Para Kay (To):</span>
+                      <p className="text-xl font-black uppercase tracking-wider">{record.respondent_name || "[Pangalan ng Inirereklamo]"}</p>
+                      <p className="text-sm italic text-gray-500">Inirereklamo (Respondent)</p>
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <p><strong>Case No:</strong> {record.id}</p>
-                    <p className="mt-1"><strong>Date:</strong> {new Date().toLocaleDateString()}</p>
+                  <div className="text-right space-y-2">
+                    <p><span className="font-bold uppercase text-xs tracking-wider text-gray-600 block">Blotter Case No:</span> <span className="text-lg font-mono font-bold">{record.id}</span></p>
+                    <p><span className="font-bold uppercase text-xs tracking-wider text-gray-600 block">Petsa (Date):</span> <span className="text-lg font-bold">{new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span></p>
                   </div>
                 </div>
 
-                <div className="space-y-6 text-justify leading-relaxed font-serif text-lg">
-                  <p>
-                    Ipinababatid sa inyo na kayo ay inirereklamo ni <strong>{record.complainant}</strong> dahil sa usaping: <strong>{record.incidentType}</strong>.
+                <div className="mt-16 space-y-8 text-justify leading-relaxed text-lg">
+                  <p className="first-letter:text-3xl first-letter:font-bold">
+                    Ipinababatid sa inyo na kayo ay inirereklamo ni <span className="font-bold underline">{record.complainant}</span> dahil sa usaping: <span className="font-bold">{record.incidentType}</span>.
                   </p>
-                  <p>
-                    Kayo ay inaatasang humarap sa akin, kasama ang inyong mga testigo, sa <strong>{hearingDate ? new Date(hearingDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric'}) : "[Petsa]"}</strong> sa ganap na <strong>{hearingTime || "[Oras]"}</strong> sa Tanggapan ng Punong Barangay upang mapag-usapan at magkaroon ng mapayapang pag-aayos ang inyong hidwaan.
-                  </p>
-                  <p className="font-bold italic mt-8">
-                    Ang hindi ninyo pagdalo ay nangangahulugan ng inyong pagtalikod sa anumang karapatan sa ilalim ng Katarungang Pambarangay at maaaring maging dahilan upang maiakyat ang kaso sa Hukuman.
+                  
+                  <div className="bg-gray-50 p-8 border-l-4 border-black italic">
+                    <p>
+                      Kayo ay inaatasang humarap sa akin, kasama ang inyong mga testigo, sa <span className="font-bold not-italic underline">{hearingDate ? new Date(hearingDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric'}) : "[Petsa]"}</span> sa ganap na <span className="font-bold not-italic underline">{hearingTime || "[Oras]"}</span> sa Tanggapan ng Punong Barangay upang mapag-usapan at magkaroon ng mapayapang pag-aayos ang inyong hidwaan.
+                    </p>
+                  </div>
+
+                  <p className="font-bold text-base mt-12 border-t border-black pt-4">
+                    BABALA: <span className="font-normal italic">Ang hindi ninyo pagdalo ay nangangahulugan ng inyong pagtalikod sa anumang karapatan sa ilalim ng Katarungang Pambarangay at maaaring maging dahilan upang maiakyat ang kaso sa Hukuman.</span>
                   </p>
                 </div>
 
-                <div className="mt-16 text-right font-serif">
-                  <p className="mb-12">Ipinag-uutos ni:</p>
-                  <div className="inline-block text-center border-t border-black pt-2 min-w-[250px]">
-                    <p className="font-bold uppercase text-lg">{officerName}</p>
-                    <p className="text-sm">Punong Barangay / Tagapamayapa</p>
+                <div className="mt-32 text-right">
+                  <p className="mb-16 font-bold italic text-gray-600">Ipinag-uutos ni:</p>
+                  <div className="inline-block text-center border-t-2 border-black pt-2 min-w-[350px]">
+                    <p className="font-black uppercase text-xl tracking-widest">{officerName}</p>
+                    <p className="text-[10px] uppercase font-bold tracking-[0.2em] text-gray-500 mt-1">Punong Barangay / Tagapamayapa</p>
                   </div>
                 </div>
               </div>

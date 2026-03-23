@@ -15,12 +15,12 @@ import {
 } from "recharts"
 
 const COLORS = [
-  "oklch(0.48 0.20 258)",
-  "oklch(0.58 0.15 230)",
-  "oklch(0.68 0.12 210)",
-  "oklch(0.78 0.08 190)",
-  "oklch(0.88 0.05 170)",
-  "oklch(0.94 0.01 250)",
+  "var(--chart-1)",
+  "var(--chart-2)",
+  "var(--chart-3)",
+  "var(--chart-4)",
+  "var(--chart-5)",
+  "var(--primary)",
 ]
 
 export function IncidentTypeBarChart() {
@@ -66,7 +66,7 @@ export function IncidentTypeBarChart() {
   return (
     <Card className="shadow-sm border-border w-full h-full flex flex-col">
       <CardHeader className="pb-4">
-        <CardTitle className="text-xl font-bold font-serif text-foreground">
+        <CardTitle className="text-xl font-bold font-sans text-foreground">
           Mga Uri ng Reklamo
         </CardTitle>
         <CardDescription className="text-[10px] font-bold text-muted-foreground font-sans uppercase tracking-[0.15em] mt-1">
@@ -85,15 +85,15 @@ export function IncidentTypeBarChart() {
         ) : (
           <ResponsiveContainer width="100%" height={240}>
             <BarChart data={data} margin={{ top: 4, right: 8, left: -25, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="oklch(0.9 0.01 250)" />
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
               <XAxis
                 dataKey="type"
-                tick={{ fontSize: 10, fill: "oklch(0.52 0.02 255)", fontFamily: "var(--font-sans)" }}
+                tick={{ fontSize: 10, fill: "var(--muted-foreground)", fontFamily: "var(--font-sans)" }}
                 axisLine={false}
                 tickLine={false}
               />
               <YAxis
-                tick={{ fontSize: 10, fill: "oklch(0.52 0.02 255)", fontFamily: "var(--font-sans)" }}
+                tick={{ fontSize: 10, fill: "var(--muted-foreground)", fontFamily: "var(--font-sans)" }}
                 axisLine={false}
                 tickLine={false}
               />

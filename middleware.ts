@@ -82,7 +82,7 @@ export async function middleware(request: NextRequest) {
         .single()
       
       const role = profile?.role
-      const isAuthorized = role === 'Punong Barangay' || role === 'Secretary'
+      const isAuthorized = role === 'Brgy. Captain' || role === 'Secretary'
       
       if (!isAuthorized) {
         const url = request.nextUrl.clone()

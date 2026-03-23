@@ -190,7 +190,7 @@ export function NewBlotterSheet({ open, onOpenChange, onSuccess }: NewBlotterShe
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="w-full sm:max-w-xl overflow-y-auto">
         <SheetHeader className="pb-4 border-b border-border mb-4">
-          <SheetTitle className="text-2xl font-bold font-serif text-foreground">
+          <SheetTitle className="text-2xl font-bold font-sans text-foreground">
             Bagong Rekord ng Blotter
           </SheetTitle>
           <SheetDescription className="text-[10px] font-bold text-muted-foreground font-sans uppercase tracking-[0.15em] mt-1">

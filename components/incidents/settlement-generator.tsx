@@ -50,7 +50,7 @@ export function SettlementGenerator({ open, onOpenChange, record }: SettlementGe
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle className="font-serif text-2xl text-foreground">Barangay Settlement</DialogTitle>
+          <DialogTitle className="font-sans text-2xl text-foreground">Barangay Settlement</DialogTitle>
           <DialogDescription className="font-sans text-sm tracking-wide text-muted-foreground">
             Generate Amicable Settlement form (Kasunduang Pag-aayos) for Lupon Tagapamayapa.
           </DialogDescription>
@@ -81,62 +81,68 @@ export function SettlementGenerator({ open, onOpenChange, record }: SettlementGe
           </div>
 
           {/* Hidden Print Wrapper */}
-          <div className="hidden print:block fixed inset-0 bg-white z-[9999] p-12 text-black">
-            <div className="max-w-3xl mx-auto">
-              <div className="text-center mb-10 border-b-2 border-black pb-6">
-                <p className="text-sm uppercase tracking-widest font-bold">Republic of the Philippines</p>
-                <p className="text-sm uppercase tracking-widest font-bold">Province of Batangas</p>
-                <p className="text-sm uppercase tracking-widest font-bold">Municipality of San Jose</p>
-                <h1 className="text-2xl font-black uppercase mt-4 font-serif">LUPONG TAGAPAMAYAPA</h1>
-                <p className="text-lg font-serif italic mt-2">Barangay Banay-Banay II</p>
+          <div className="hidden print:block fixed inset-0 bg-white z-[9999] p-0 text-black font-sans">
+            <div className="print-container">
+              <div className="text-center mb-8 pb-4 border-b-2 border-black">
+                <p className="text-sm uppercase tracking-[0.2em] font-bold">Republic of the Philippines</p>
+                <p className="text-sm uppercase tracking-[0.2em] font-bold">Province of Batangas</p>
+                <p className="text-sm uppercase tracking-[0.2em] font-bold">Municipality of San Jose</p>
+                <div className="mt-6">
+                  <h1 className="text-2xl font-black uppercase tracking-widest">LUPONG TAGAPAMAYAPA</h1>
+                  <p className="text-lg italic mt-1">Barangay Banay-Banay II</p>
+                </div>
               </div>
 
-              <div className="mb-8 font-serif">
-                <h2 className="text-3xl font-black text-center mb-10 tracking-widest underline underline-offset-8">KASUNDUANG PAG-AAYOS</h2>
+              <div className="mt-12">
+                <h2 className="text-3xl font-black text-center mb-12 tracking-[0.3em] underline underline-offset-8 decoration-2">KASUNDUANG PAG-AAYOS</h2>
                 
-                <div className="flex justify-between mb-8 text-lg">
-                  <div>
-                    <p><strong>Complainant:</strong> {record.complainant}</p>
-                    <p className="mt-2"><strong>Respondent:</strong> {record.respondent_name || "______________________"}</p>
+                <div className="grid grid-cols-2 gap-12 mb-10 text-base">
+                  <div className="space-y-2">
+                    <p><span className="font-bold uppercase text-xs tracking-wider text-gray-600 block">Nagrereklamo (Complainant):</span> <span className="text-lg font-bold">{record.complainant}</span></p>
+                    <p><span className="font-bold uppercase text-xs tracking-wider text-gray-600 block">Inirereklamo (Respondent):</span> <span className="text-lg font-bold">{record.respondent_name || "______________________"}</span></p>
                   </div>
-                  <div className="text-right">
-                    <p><strong>Blotter Case No:</strong> {record.id}</p>
-                    <p className="mt-2"><strong>Incident Type:</strong> {record.incidentType}</p>
+                  <div className="text-right space-y-2">
+                    <p><span className="font-bold uppercase text-xs tracking-wider text-gray-600 block">Blotter Case No:</span> <span className="text-lg font-mono font-bold">{record.id}</span></p>
+                    <p><span className="font-bold uppercase text-xs tracking-wider text-gray-600 block">Incident Type:</span> <span className="text-lg font-bold">{record.incidentType}</span></p>
                   </div>
                 </div>
 
-                <div className="space-y-6 text-justify leading-relaxed text-lg mt-12 bg-gray-50 p-6 border border-gray-300">
-                  <p className="font-bold mb-4 uppercase text-sm tracking-widest">Gist of Agreement:</p>
-                  <p className="whitespace-pre-wrap">{agreementText}</p>
+                <div className="mt-16 relative">
+                  <div className="absolute -top-4 left-0 bg-white px-2">
+                    <span className="font-bold uppercase text-xs tracking-widest text-gray-500 italic">Salaysay ng Kasunduan (Agreement Narrative)</span>
+                  </div>
+                  <div className="border border-black p-8 text-justify leading-loose text-lg min-h-[300px]">
+                    <p className="whitespace-pre-wrap">{agreementText}</p>
+                  </div>
                 </div>
 
-                <div className="mt-10 leading-relaxed text-lg">
+                <div className="mt-12 text-justify leading-relaxed text-base italic text-gray-800">
                   <p>
                     Nangangako kami na tutuparin nang buong katapatan ang mga nakasaad sa itaas na kasunduan. Kung sinuman sa amin ang hindi tumupad, ang kabilang panig ay maaaring dumulog sa mga kinauukulan upang ipatupad ang kasunduang ito alinsunod sa batas.
                   </p>
-                  <p className="mt-4">
-                    Nilagdaan ngayong ika-<strong>{new Date().getDate()}</strong> ng <strong>{new Date().toLocaleString('default', { month: 'long' })}</strong>, <strong>{new Date().getFullYear()}</strong>.
+                  <p className="mt-6 not-italic font-bold">
+                    Nilagdaan ngayong ika-{new Date().getDate()} ng {new Date().toLocaleString('default', { month: 'long' })}, {new Date().getFullYear()}.
                   </p>
                 </div>
 
-                <div className="flex justify-between mt-20 text-center">
-                  <div className="min-w-[200px]">
-                    <div className="border-b border-black mb-2 pb-1"></div>
-                    <p className="font-bold text-lg">{record.complainant}</p>
-                    <p className="text-sm">Nagrereklamo (Complainant)</p>
+                <div className="flex justify-between mt-24 text-center">
+                  <div className="w-[200px]">
+                    <div className="border-b-2 border-black mb-2"></div>
+                    <p className="font-bold text-lg uppercase tracking-wider">{record.complainant}</p>
+                    <p className="text-[10px] uppercase font-bold tracking-widest text-gray-500 mt-1">Nagrereklamo</p>
                   </div>
-                  <div className="min-w-[200px]">
-                    <div className="border-b border-black mb-2 pb-1"></div>
-                    <p className="font-bold text-lg">{record.respondent_name || "______________________"}</p>
-                    <p className="text-sm">Inirereklamo (Respondent)</p>
+                  <div className="w-[200px]">
+                    <div className="border-b-2 border-black mb-2"></div>
+                    <p className="font-bold text-lg uppercase tracking-wider">{record.respondent_name || "______________________"}</p>
+                    <p className="text-[10px] uppercase font-bold tracking-widest text-gray-500 mt-1">Inirereklamo</p>
                   </div>
                 </div>
 
-                <div className="mt-16 pt-8 border-t-2 border-dashed border-gray-400 text-center">
-                  <p className="mb-12 font-bold italic">Pinatutunayan:</p>
-                  <div className="inline-block text-center border-t border-black pt-2 min-w-[300px]">
-                    <p className="font-bold uppercase text-lg">{officerName}</p>
-                    <p className="text-sm">Punong Barangay / Lupon Chairman</p>
+                <div className="mt-32 text-center">
+                  <p className="mb-16 font-bold italic text-gray-600">Pinatutunayan:</p>
+                  <div className="inline-block text-center border-t-2 border-black pt-2 min-w-[350px]">
+                    <p className="font-black uppercase text-xl tracking-widest">{officerName}</p>
+                    <p className="text-[10px] uppercase font-bold tracking-[0.2em] text-gray-500 mt-1">Punong Barangay / Lupon Chairman</p>
                   </div>
                 </div>
               </div>

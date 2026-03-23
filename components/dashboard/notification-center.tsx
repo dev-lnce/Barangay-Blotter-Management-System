@@ -126,7 +126,11 @@ export function NotificationCenter() {
           )}
         </div>
         <div className="border-t p-2">
-          <Button variant="ghost" className="w-full text-[10px] font-black uppercase tracking-widest text-primary hover:bg-primary/5 h-8">
+          <Button 
+            variant="ghost" 
+            className="w-full text-[10px] font-black uppercase tracking-widest text-primary hover:bg-primary/5 h-8"
+            onClick={() => setNotifications([])}
+          >
             Mark all as read
           </Button>
         </div>

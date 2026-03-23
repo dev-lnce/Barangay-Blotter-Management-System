@@ -135,9 +135,9 @@ export function KpiCards() {
   return (
     <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
       {cards.map((card) => (
-        <Card key={card.title} className="shadow-sm border-border bg-card">
-          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-            <CardTitle className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.15em] font-sans">
+        <Card key={card.title} className="shadow-airy border-border/50 bg-card overflow-hidden">
+          <CardHeader className="flex flex-row items-center justify-between pb-3 space-y-0">
+            <CardTitle className="text-[10px] font-extrabold text-foreground/40 uppercase tracking-[0.2em] font-sans">
               {card.title}
             </CardTitle>
             <div className={cn("flex h-8 w-8 items-center justify-center rounded-full shadow-sm", card.bg)}>
@@ -145,7 +145,7 @@ export function KpiCards() {
             </div>
           </CardHeader>
           <CardContent>
-            <p className="text-4xl font-bold text-primary font-serif tracking-tight mt-1">{card.value}</p>
+            <p className="text-4xl font-extrabold text-primary font-sans tracking-tight mt-1">{card.value}</p>
             <div className="mt-2 flex items-center gap-1.5">
               {card.trendDir === "up" && <TrendingUp className="h-3 w-3 text-emerald-500" />}
               <span className={cn(

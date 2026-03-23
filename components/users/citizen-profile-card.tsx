@@ -47,17 +47,17 @@ export function CitizenProfileCard({
         <div className="absolute top-0 left-0 w-full h-1 bg-destructive/60" />
       )}
 
-      <CardContent className="p-5">
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex items-center gap-4">
+      <CardContent className="p-4">
+        <div className="flex items-start justify-between mb-3">
+          <div className="flex items-center gap-3">
             <div className={cn(
-              "flex h-12 w-12 items-center justify-center rounded-full text-sm font-black font-serif shadow-inner border border-border/40",
+              "flex h-10 w-10 items-center justify-center rounded-full text-xs font-black font-sans shadow-inner border border-border/40",
               isHighRisk ? "bg-destructive/5 text-destructive" : "bg-primary/5 text-primary"
             )}>
               {initials}
             </div>
             <div>
-              <h3 className="font-serif text-lg font-bold text-foreground leading-tight group-hover:text-primary transition-colors">
+              <h3 className="font-sans text-base font-bold text-foreground leading-tight group-hover:text-primary transition-colors line-clamp-1">
                 {isMinor ? <span className="blur-sm select-none opacity-40">Name Protected</span> : name}
               </h3>
               <div className="flex items-center gap-2 mt-1">
@@ -79,25 +79,25 @@ export function CitizenProfileCard({
           )}
         </div>
 
-        <div className="grid grid-cols-2 gap-3 mb-5">
-          <div className="bg-muted/30 rounded-lg p-3 border border-border/30">
-            <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Nagrereklamo</p>
+        <div className="grid grid-cols-2 gap-2 mb-3">
+          <div className="bg-muted/30 rounded-lg p-2.5 border border-border/30">
+            <p className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest mb-0.5">Nagrereklamo</p>
             <div className="flex items-baseline gap-1">
-              <span className="text-xl font-serif font-black text-foreground">{complainantCount}</span>
-              <span className="text-[10px] text-muted-foreground font-sans">Mga Kaso</span>
+              <span className="text-lg font-sans font-black text-foreground">{complainantCount}</span>
+              <span className="text-[9px] text-muted-foreground font-sans">Kaso</span>
             </div>
           </div>
           <div className={cn(
-            "rounded-lg p-3 border",
+            "rounded-lg p-2.5 border",
             respondentCount > 0 ? "bg-destructive/5 border-destructive/10" : "bg-muted/30 border-border/30"
           )}>
-            <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Inirereklamo</p>
+            <p className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest mb-0.5">Inirereklamo</p>
             <div className="flex items-baseline gap-1">
               <span className={cn(
-                "text-xl font-serif font-black",
+                "text-lg font-sans font-black",
                 respondentCount > 0 ? "text-destructive" : "text-foreground"
               )}>{respondentCount}</span>
-              <span className="text-[10px] text-muted-foreground font-sans">Mga Kaso</span>
+              <span className="text-[9px] text-muted-foreground font-sans">Kaso</span>
             </div>
           </div>
         </div>
@@ -130,11 +130,11 @@ export function CitizenProfileCard({
         <Button 
           variant="outline" 
           size="sm" 
-          className="w-full mt-4 h-8 text-[10px] uppercase font-black tracking-widest gap-2 bg-transparent border-border/60 hover:bg-primary hover:text-primary-foreground group-hover:border-primary/20"
+          className="w-full mt-3 h-7 text-[9px] uppercase font-black tracking-widest gap-2 bg-transparent border-border/60 hover:bg-primary hover:text-primary-foreground group-hover:border-primary/20"
           onClick={onViewDetails}
         >
-          View Full Profile
-          <ChevronRight className="h-3 w-3" />
+          Full Profile
+          <ChevronRight className="h-2.5 w-2.5" />
         </Button>
       </CardContent>
     </Card>

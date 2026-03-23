@@ -47,11 +47,11 @@ export function TopHeader() {
   const roleName = profile?.role || 'Barangay Admin'
 
   return (
-    <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-border bg-card/80 backdrop-blur-sm px-6">
+    <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-border bg-background/60 backdrop-blur-md px-6 shadow-sm">
       {/* Left: page title */}
       <div>
-        <h1 className="text-base font-semibold text-foreground font-sans">Dashboard Overview</h1>
-        <p className="text-xs text-muted-foreground font-sans">Barangay Banay-banay — March 2026</p>
+        <h1 className="text-sm font-bold text-foreground font-sans tracking-tight uppercase">Dashboard Overview</h1>
+        <p className="text-[10px] text-muted-foreground font-sans font-medium uppercase tracking-wider">Barangay Banay-banay — March 2026</p>
       </div>
 
       {/* Right: search + bell + avatar */}

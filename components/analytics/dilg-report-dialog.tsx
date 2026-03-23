@@ -162,7 +162,7 @@ export function DILGReportDialog() {
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="font-serif text-xl font-bold">DILG Monthly Summary</DialogTitle>
+          <DialogTitle className="font-sans text-xl font-bold">DILG Monthly Summary</DialogTitle>
         </DialogHeader>
         
         <div className="space-y-6 py-4">
@@ -203,11 +203,11 @@ export function DILGReportDialog() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Total Reported</p>
-                  <p className="text-2xl font-serif font-black">{data.total}</p>
+                  <p className="text-2xl font-sans font-black">{data.total}</p>
                 </div>
                 <div>
                   <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Resolution Rate</p>
-                  <p className="text-2xl font-serif font-black text-emerald-600">
+                  <p className="text-2xl font-sans font-black text-emerald-600">
                     {data.total > 0 ? ((data.resolved / data.total) * 100).toFixed(0) : 0}%
                   </p>
                 </div>

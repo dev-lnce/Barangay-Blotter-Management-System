@@ -80,6 +80,7 @@ export function RecentIncidentsTable() {
 
             return {
               id: formattedId,
+              rawId: record.id,
               date: new Date(record.created_at).toLocaleDateString("en-US", {
                 month: "short",
                 day: "numeric",
@@ -103,18 +104,18 @@ export function RecentIncidentsTable() {
   }, [])
 
   return (
-    <Card className="shadow-sm border-border h-full flex flex-col">
-      <CardHeader className="pb-4 shrink-0 border-b border-border/50">
+    <Card className="shadow-airy border-border/50 h-full flex flex-col overflow-hidden">
+      <CardHeader className="pb-4 shrink-0 border-b border-border/50 bg-background/30 backdrop-blur-sm">
         <div className="flex items-center justify-between">
           <div>
-            <CardTitle className="text-2xl font-bold font-serif text-foreground">
+            <CardTitle className="text-xl font-extrabold font-sans text-foreground tracking-tight">
               Mga Pinakabagong Reklamo
             </CardTitle>
-            <CardDescription className="text-[10px] text-muted-foreground font-sans uppercase tracking-[0.15em] font-bold mt-1">
+            <CardDescription className="text-[10px] text-primary/60 font-sans uppercase tracking-[0.2em] font-extrabold mt-1">
               {incidents.length} AKTIBONG REKORD
             </CardDescription>
           </div>
-          <Link href="/incidents" className="text-xs text-primary font-bold font-sans tracking-widest uppercase cursor-pointer hover:underline flex items-center gap-1">
+          <Link href="/incidents" className="text-[10px] text-primary font-extrabold font-sans tracking-[0.15em] uppercase cursor-pointer hover:underline flex items-center gap-1.5 transition-all">
             Tingnan Lahat &rarr;
           </Link>
         </div>
@@ -122,20 +123,20 @@ export function RecentIncidentsTable() {
       <CardContent className="pt-0 overflow-x-auto flex-1">
         <Table>
           <TableHeader>
-            <TableRow className="hover:bg-transparent border-none bg-secondary/50">
-              <TableHead className="text-[10px] font-bold text-foreground uppercase tracking-[0.15em] font-sans whitespace-nowrap h-10 px-4 first:rounded-tl-lg last:rounded-tr-lg">
+            <TableRow className="hover:bg-transparent border-none bg-primary/5">
+              <TableHead className="text-[10px] font-extrabold text-primary/80 uppercase tracking-[0.15em] font-sans whitespace-nowrap h-10 px-4 first:rounded-tl-lg last:rounded-tr-lg">
                 Incident ID
               </TableHead>
-              <TableHead className="text-[10px] font-bold text-foreground uppercase tracking-[0.15em] font-sans whitespace-nowrap h-10 px-4">
+              <TableHead className="text-[10px] font-extrabold text-primary/80 uppercase tracking-[0.15em] font-sans whitespace-nowrap h-10 px-4">
                 Date
               </TableHead>
-              <TableHead className="text-[10px] font-bold text-foreground uppercase tracking-[0.15em] font-sans whitespace-nowrap h-10 px-4">
+              <TableHead className="text-[10px] font-extrabold text-primary/80 uppercase tracking-[0.15em] font-sans whitespace-nowrap h-10 px-4">
                 Category
               </TableHead>
-              <TableHead className="text-[10px] font-bold text-foreground uppercase tracking-[0.15em] font-sans whitespace-nowrap h-10 px-4">
+              <TableHead className="text-[10px] font-extrabold text-primary/80 uppercase tracking-[0.15em] font-sans whitespace-nowrap h-10 px-4">
                 Kalubhaan
               </TableHead>
-              <TableHead className="text-[10px] font-bold text-foreground uppercase tracking-[0.15em] font-sans whitespace-nowrap h-10 px-4 first:rounded-tl-lg last:rounded-tr-lg">
+              <TableHead className="text-[10px] font-extrabold text-primary/80 uppercase tracking-[0.15em] font-sans whitespace-nowrap h-10 px-4 first:rounded-tl-lg last:rounded-tr-lg">
                 Status
               </TableHead>
             </TableRow>
@@ -156,8 +157,8 @@ export function RecentIncidentsTable() {
             ) : (
               incidents.map((inc) => (
                 <TableRow key={inc.id} className="border-border hover:bg-muted/30 transition-colors">
-                  <TableCell className="text-xs font-mono text-foreground font-medium py-3 whitespace-nowrap">
-                    {inc.id}
+                  <TableCell className="text-xs font-mono text-foreground font-medium py-3 whitespace-nowrap hover:text-primary transition-colors">
+                    <Link href={`/incidents/${inc.rawId}`}>{inc.id}</Link>
                   </TableCell>
                   <TableCell className="text-xs text-muted-foreground font-sans py-3 whitespace-nowrap">
                     {inc.date}

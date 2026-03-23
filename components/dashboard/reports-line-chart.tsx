@@ -48,7 +48,7 @@ export function ReportsLineChart() {
     <Card className="shadow-sm border-border flex-1 h-full">
       <CardHeader className="flex flex-row items-start justify-between gap-4 pb-4">
         <div>
-          <CardTitle className="text-xl font-bold font-serif text-foreground">Trend ng mga Kaso</CardTitle>
+          <CardTitle className="text-xl font-bold font-sans text-foreground">Trend ng mga Kaso</CardTitle>
           <CardDescription className="text-[10px] font-bold text-muted-foreground font-sans uppercase tracking-[0.15em] mt-1">
             VIEWING BY {dateBasis === "created_at" ? "REPORT DATE" : "INCIDENT DATE"}
           </CardDescription>
@@ -98,17 +98,17 @@ export function ReportsLineChart() {
             <Line
               type="monotone"
               dataKey="unresolved"
-              stroke="oklch(0.577 0.245 27.325)"
+              stroke="var(--chart-5)"
               strokeWidth={3}
-              dot={{ r: 4, fill: "oklch(0.577 0.245 27.325)" }}
+              dot={{ r: 4, fill: "var(--chart-5)" }}
               name="Unresolved"
             />
             <Line
               type="monotone"
               dataKey="resolved"
-              stroke="oklch(0.62 0.15 155)"
+              stroke="var(--chart-2)"
               strokeWidth={3}
-              dot={{ r: 4, fill: "oklch(0.62 0.15 155)" }}
+              dot={{ r: 4, fill: "var(--chart-2)" }}
               name="Resolved"
             />
           </LineChart>

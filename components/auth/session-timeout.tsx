@@ -94,7 +94,7 @@ export function SessionTimeout() {
           <div className="h-12 w-12 rounded-full bg-destructive/10 flex items-center justify-center mb-2">
             <AlertTriangle className="h-6 w-6 text-destructive animate-pulse" />
           </div>
-          <DialogTitle className="font-serif text-xl font-bold">Session Timeout Warning</DialogTitle>
+          <DialogTitle className="font-sans text-xl font-bold">Session Timeout Warning</DialogTitle>
           <DialogDescription className="text-sm font-sans mt-2">
             Inalerto ka ng system dahil matagal kang hindi aktibo. 
             Malo-log out ka sa loob ng <span className="font-bold text-destructive font-mono">{timeLeft}</span> segundo.

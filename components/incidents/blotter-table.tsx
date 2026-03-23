@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { Search, Filter, Plus, MoreHorizontal, Eye, Pencil, RefreshCw, Trash2, Printer, Clock, FileText, ShieldCheck, Download } from "lucide-react"
 import { Input } from "@/components/ui/input"
@@ -98,7 +99,7 @@ function getStatusBadge(status: string) {
       )
     case "Investigating":
       return (
-        <Badge className="bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-100">
+        <Badge className="bg-info/10 text-info border-info/20 hover:bg-info/15">
           Investigating
         </Badge>
       )
@@ -112,8 +113,8 @@ function getStatusBadge(status: string) {
       return <Badge variant="outline">{status}</Badge>
   }
 }
-
 export function BlotterTable() {
+  const router = useRouter()
   const [blotterRecords, setBlotterRecords] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
   
@@ -123,10 +124,6 @@ export function BlotterTable() {
   const [sheetOpen, setSheetOpen] = useState(false)
   
   const [refreshTrigger, setRefreshTrigger] = useState(0)
-  const [viewRecord, setViewRecord] = useState<any | null>(null)
-  const [viewSheetOpen, setViewSheetOpen] = useState(false)
-
-  // State for Edit
   const [editRecord, setEditRecord] = useState<any | null>(null)
   const [editSheetOpen, setEditSheetOpen] = useState(false)
 
@@ -295,15 +292,15 @@ export function BlotterTable() {
       <Card className="border-border shadow-sm">
         <CardHeader className="pb-4">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <CardTitle className="text-2xl font-bold font-serif text-foreground">
+            <CardTitle className="text-2xl font-bold font-sans text-foreground">
               Mga Rekord ng Blotter
             </CardTitle>
             <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-              <Button variant="outline" className="gap-2 font-sans w-full sm:w-auto text-muted-foreground hover:text-foreground border-border/60" onClick={exportToCsv}>
+              <Button variant="outline" className="gap-2 w-full sm:w-auto text-muted-foreground hover:text-foreground border-border/60" onClick={exportToCsv}>
                 <Download className="h-4 w-4" />
                 Export
               </Button>
-              <Button onClick={() => setSheetOpen(true)} className="gap-2 font-sans w-full sm:w-auto bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm">
+              <Button onClick={() => setSheetOpen(true)} className="gap-2 w-full sm:w-auto bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm">
                 <Plus className="h-4 w-4" />
                 Talaan
               </Button>
@@ -358,11 +355,11 @@ export function BlotterTable() {
           {/* Grid of Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6 mt-6">
             {isLoading ? (
-              <div className="col-span-full h-32 flex items-center justify-center text-sm font-sans text-muted-foreground">
+              <div className="col-span-full h-32 flex items-center justify-center text-sm text-muted-foreground">
                 Loading records from database...
               </div>
             ) : filteredRecords.length === 0 ? (
-              <div className="col-span-full h-32 flex items-center justify-center text-sm font-sans text-muted-foreground">
+              <div className="col-span-full h-32 flex items-center justify-center text-sm text-muted-foreground">
                 No records found matching your criteria.
               </div>
             ) : (
@@ -402,40 +399,54 @@ export function BlotterTable() {
                 return (
                   <Card key={record.id} className="relative bg-white rounded-xl shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] hover:shadow-lg transition-all duration-300 hover:border-primary/50 overflow-hidden flex flex-col group p-0 border border-border">
                     <div className="absolute top-4 left-4 z-10">
-                      <span className={cn("inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-[0.1em] backdrop-blur-md border font-sans", badgeStyle)}>
+                      <span className={cn("inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-[0.1em] backdrop-blur-md border", badgeStyle)}>
                         {statusText}
                       </span>
                     </div>
 
-                    <div className="h-20 bg-gradient-to-br from-secondary/40 to-muted/20 border-b border-border/50 shrink-0" />
+                    <div className="h-4 bg-gradient-to-r from-primary to-primary/60 shrink-0" />
 
-                    <div className="p-5 flex flex-col flex-1">
-                      <div className="mb-auto mt-2">
-                        <h3 className="font-serif text-xl font-bold text-foreground leading-tight mb-1 line-clamp-2">{record.incidentType || "Incident"}</h3>
-                        <p className="font-mono text-[10px] text-muted-foreground tracking-widest uppercase mb-1">{record.id}</p>
-                        <p className="font-sans text-[11px] text-muted-foreground mt-2 line-clamp-1">{record.complainant} <br/> {record.location}</p>
+                    <div className="p-4 flex flex-col flex-1">
+                      <div className="mb-4">
+                        <div className="flex items-start justify-between gap-2 mb-1">
+                           <h3 className="font-sans text-lg font-bold text-foreground leading-tight line-clamp-1">{record.incidentType || "Incident"}</h3>
+                           <p className="font-mono text-[9px] text-muted-foreground tracking-widest uppercase shrink-0 mt-1">{record.id}</p>
+                        </div>
+                        <p className="text-[11px] text-muted-foreground line-clamp-1">{record.complainant} • {record.location}</p>
                       </div>
 
-                      <div className="space-y-4 mt-8">
+                      <div className="grid grid-cols-2 gap-4 mt-2">
                         <div>
-                          <div className="flex justify-between text-[10px] font-bold uppercase tracking-[0.15em] mb-1.5 text-muted-foreground font-sans">
-                            <span>Kalubhaan</span>
-                            <span className={severityColor.replace('bg-', 'text-')}>{severityLevel}</span>
-                          </div>
-                          <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
-                            <div className={cn("h-full rounded-full transition-all duration-500", severityColor)} style={{ width: `${severityPercent}%` }} />
+                          <p className="text-[9px] font-bold uppercase tracking-wider mb-1.5 text-muted-foreground/60">Kalubhaan</p>
+                          <div className="flex items-center gap-2">
+                            <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
+                              <div className={cn("h-full rounded-full transition-all duration-500", severityColor)} style={{ width: `${severityPercent}%` }} />
+                            </div>
+                            <span className={cn("text-[8px] font-black shrink-0", severityColor.replace('bg-', 'text-'))}>{severityLevel.split(' ')[0]}</span>
                           </div>
                         </div>
 
                         <div>
-                          <div className="flex justify-between text-[10px] font-bold uppercase tracking-[0.15em] mb-1.5 text-muted-foreground font-sans">
-                            <span>Tagal Ng Kaso</span>
-                            <span>{daysLabel}</span>
-                          </div>
-                          <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
-                            <div className={cn("h-full rounded-full transition-all duration-500", daysColor)} style={{ width: `${daysPercent}%` }} />
+                          <p className="text-[9px] font-bold uppercase tracking-wider mb-1.5 text-muted-foreground/60">Tagal</p>
+                          <div className="flex items-center gap-2">
+                            <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
+                              <div className={cn("h-full rounded-full transition-all duration-500", daysColor)} style={{ width: `${daysPercent}%` }} />
+                            </div>
+                            <span className="text-[8px] font-black text-muted-foreground shrink-0">{daysLabel}</span>
                           </div>
                         </div>
+                      </div>
+
+                      <div className="mt-4 pt-4 border-t border-border/50">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="w-full gap-2 text-[10px] font-black uppercase tracking-widest h-8 border-primary/20 hover:bg-primary/5 hover:text-primary transition-all"
+                          onClick={() => router.push(`/incidents/${record.rawId}`)}
+                        >
+                          <Eye className="h-3 w-3" />
+                          View Full Details
+                        </Button>
                       </div>
                     </div>
 
@@ -448,7 +459,7 @@ export function BlotterTable() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-48">
-                          <DropdownMenuItem className="gap-2 cursor-pointer" onClick={() => { setViewRecord(record); setViewSheetOpen(true) }}>
+                          <DropdownMenuItem className="gap-2 cursor-pointer" onClick={() => router.push(`/incidents/${record.rawId}`)}>
                             <Eye className="h-4 w-4" /> View Details
                           </DropdownMenuItem>
                           <DropdownMenuItem className="gap-2 cursor-pointer" onClick={() => { setEditRecord(record); setEditSheetOpen(true) }}>
@@ -467,7 +478,7 @@ export function BlotterTable() {
                             <Trash2 className="h-4 w-4" /> Delete
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
-                          <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground font-sans uppercase tracking-widest">Set Status</div>
+                          <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-widest">Set Status</div>
                           <DropdownMenuItem onClick={() => handleUpdateStatus(record.rawId, 'Open', record.id)}>
                             <div className="h-2 w-2 rounded-full bg-amber-500 mr-2" /> Mark as Open
                           </DropdownMenuItem>
@@ -532,85 +543,6 @@ export function BlotterTable() {
         onOpenChange={setSettlementDialogOpen}
         record={settlementRecord}
       />
-
-      {/* View Record Details Sheet */}
-      <Sheet open={viewSheetOpen} onOpenChange={setViewSheetOpen}>
-        <SheetContent className="w-full sm:max-w-md overflow-y-auto">
-          {viewRecord && (
-            <>
-              <SheetHeader className="pb-6 border-b border-border mb-6">
-                <div className="flex items-center justify-between">
-                  <SheetTitle className="text-xl font-bold text-foreground">
-                    {viewRecord.id}
-                  </SheetTitle>
-                  {getStatusBadge(viewRecord.status)}
-                </div>
-                <SheetDescription>
-                  Reported on {new Date(viewRecord.dateReported).toLocaleDateString("en-US", {
-                    month: "long",
-                    day: "numeric",
-                    year: "numeric",
-                    hour: "2-digit",
-                    minute: "2-digit"
-                  })}
-                </SheetDescription>
-              </SheetHeader>
-
-              <div className="space-y-6">
-                <div>
-                  <h4 className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground mb-1 font-sans">Complainant</h4>
-                  <p className="text-base font-bold text-foreground font-serif">{viewRecord.complainant}</p>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <h4 className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground mb-1 font-sans">Incident Type</h4>
-                    <p className="text-sm font-semibold text-foreground font-sans">{viewRecord.incidentType}</p>
-                  </div>
-                  <div>
-                    <h4 className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground mb-1 font-sans">Location</h4>
-                    <p className="text-sm font-semibold text-foreground font-sans">{viewRecord.location}</p>
-                  </div>
-                </div>
-
-                <div>
-                  <h4 className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground mb-2 font-sans">Incident Narrative</h4>
-                  <div className="bg-muted/30 p-5 rounded-xl border border-border/50 shadow-sm">
-                    <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed font-sans">
-                      {viewRecord.narrative}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="pt-4 border-t border-border">
-                  <h4 className="text-[10px] uppercase font-bold tracking-[0.15em] text-foreground mb-6 font-sans flex items-center gap-2">
-                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/10 text-primary text-[10px] font-bold">
-                      <Clock className="h-3 w-3" />
-                    </span>
-                    Case Timeline
-                  </h4>
-                  <IncidentTimeline events={generateMockTimeline(viewRecord)} />
-                </div>
-
-                {/* Print Extract Button in View Sheet */}
-                <div className="pt-2 border-t border-border">
-                  <Button
-                    variant="outline"
-                    className="w-full gap-2"
-                    onClick={() => {
-                      setPrintRecord(viewRecord)
-                      setPrintDialogOpen(true)
-                    }}
-                  >
-                    <Printer className="h-4 w-4" />
-                    Print Blotter Extract
-                  </Button>
-                </div>
-              </div>
-            </>
-          )}
-        </SheetContent>
-      </Sheet>
-    </>
+      </>
   )
 }
