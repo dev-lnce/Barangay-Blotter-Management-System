@@ -213,12 +213,12 @@ export function UsersTable() {
           <div className="rounded-lg border border-border overflow-hidden">
             <Table>
               <TableHeader>
-                <TableRow className="bg-muted/50 hover:bg-muted/50">
-                  <TableHead className="font-semibold text-foreground">Name</TableHead>
-                  <TableHead className="font-semibold text-foreground">Role</TableHead>
-                  <TableHead className="font-semibold text-foreground">Email</TableHead>
-                  <TableHead className="font-semibold text-foreground">Last Active</TableHead>
-                  <TableHead className="font-semibold text-foreground text-right">Actions</TableHead>
+                <TableRow className="hover:bg-transparent border-none bg-[#f2f4f6]">
+                  <TableHead className="text-[9px] font-black text-[#44474e] uppercase tracking-[0.12em]">Name</TableHead>
+                  <TableHead className="text-[9px] font-black text-[#44474e] uppercase tracking-[0.12em]">Role</TableHead>
+                  <TableHead className="text-[9px] font-black text-[#44474e] uppercase tracking-[0.12em]">Email</TableHead>
+                  <TableHead className="text-[9px] font-black text-[#44474e] uppercase tracking-[0.12em]">Last Active</TableHead>
+                  <TableHead className="text-[9px] font-black text-[#44474e] uppercase tracking-[0.12em] text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -236,7 +236,7 @@ export function UsersTable() {
                   </TableRow>
                 ) : (
                   filteredUsers.map((user) => (
-                    <TableRow key={user.id} className="hover:bg-muted/30">
+                    <TableRow key={user.id} className="border-b-0 even:bg-[#f7f9fb] odd:bg-white hover:bg-[#eef2ff] transition-colors">
                       <TableCell>
                         <div className="flex items-center gap-3">
                           <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold text-sm">

@@ -10,6 +10,13 @@ import {
 } from "@/components/ui/dialog"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Printer, FileBadge2 } from "lucide-react"
 
 interface PrintBlotterExtractProps {
@@ -30,6 +37,7 @@ interface PrintBlotterExtractProps {
 export function PrintBlotterExtract({ open, onOpenChange, record }: PrintBlotterExtractProps) {
   const printRef = useRef<HTMLDivElement>(null)
   const [isCertified, setIsCertified] = useState(false)
+  const [paperSize, setPaperSize] = useState("a4")
 
   if (!record) return null
 
@@ -46,15 +54,17 @@ export function PrintBlotterExtract({ open, onOpenChange, record }: PrintBlotter
       <head>
         <title>Blotter Extract - ${record.id}</title>
         <style>
-          @import url('https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700;900&display=swap');
-          
           @media print {
             body { margin: 0; padding: 0; }
             .no-print { display: none; }
+            @page {
+              size: ${paperSize};
+              margin: 0;
+            }
           }
           
           body {
-            font-family: 'Merriweather', 'SF Serif', Georgia, serif;
+            font-family: 'Times New Roman', Times, serif;
             color: #000;
             background: #fff;
             margin: 0;
@@ -63,8 +73,8 @@ export function PrintBlotterExtract({ open, onOpenChange, record }: PrintBlotter
           }
 
           .print-container {
-            width: 210mm;
-            min-height: 297mm;
+            width: ${paperSize === 'letter' ? '8.5in' : paperSize === 'legal' ? '8.5in' : '210mm'};
+            min-height: ${paperSize === 'letter' ? '11in' : paperSize === 'legal' ? '14in' : '297mm'};
             margin: 0 auto;
             padding: 25mm;
             box-sizing: border-box;
@@ -336,12 +346,25 @@ export function PrintBlotterExtract({ open, onOpenChange, record }: PrintBlotter
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-4 border-t border-border">
           <div className="flex items-center space-x-2 bg-emerald-50 text-emerald-700 p-2 rounded-lg border border-emerald-200">
             <Switch id="certified" checked={isCertified} onCheckedChange={setIsCertified} />
-            <Label htmlFor="certified" className="text-xs font-semibold cursor-pointer flex items-center gap-1.5 uppercase tracking-wider">
-              <FileBadge2 className="h-4 w-4" />
+            <Label htmlFor="certified" className="text-xs font-semibold cursor-pointer flex items-center gap-1.5 uppercase tracking-wider whitespace-nowrap">
+              <FileBadge2 className="h-4 w-4 shrink-0" />
               Certified True Copy
             </Label>
           </div>
-          <div className="flex items-center gap-3 w-full sm:w-auto">
+          <div className="flex items-center space-x-2">
+            <Label className="text-xs uppercase font-bold tracking-wider whitespace-nowrap text-muted-foreground hidden sm:block">Paper Size</Label>
+            <Select value={paperSize} onValueChange={setPaperSize}>
+              <SelectTrigger className="w-[100px] h-8 text-xs">
+                <SelectValue placeholder="Size" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="a4" className="text-xs">A4</SelectItem>
+                <SelectItem value="letter" className="text-xs">Letter</SelectItem>
+                <SelectItem value="legal" className="text-xs">Legal</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex items-center gap-3 w-full sm:w-auto ml-auto">
             <Button variant="outline" className="flex-1 sm:flex-none" onClick={() => onOpenChange(false)}>
               Close
             </Button>

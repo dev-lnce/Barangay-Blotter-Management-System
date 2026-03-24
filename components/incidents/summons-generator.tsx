@@ -12,6 +12,13 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { logAuditEvent } from "@/lib/audit"
 
 interface SummonsGeneratorProps {
@@ -25,6 +32,7 @@ export function SummonsGenerator({ open, onOpenChange, record }: SummonsGenerato
   const [hearingTime, setHearingTime] = useState("")
   const [officerName, setOfficerName] = useState("Hon. Kapitan Andres")
   const [isGenerating, setIsGenerating] = useState(false)
+  const [paperSize, setPaperSize] = useState("a4")
 
   if (!record) return null
 
@@ -92,8 +100,14 @@ export function SummonsGenerator({ open, onOpenChange, record }: SummonsGenerato
           </div>
 
           {/* Hidden Print Wrapper */}
-          <div className="hidden print:block fixed inset-0 bg-white z-[9999] p-0 text-black font-sans">
-            <div className="print-container">
+          <div className="hidden print:block fixed inset-0 bg-white z-[9999] p-0 text-black" style={{ fontFamily: '"Times New Roman", Times, serif' }}>
+            <style dangerouslySetInnerHTML={{__html: `
+              @media print {
+                @page { size: ${paperSize === 'letter' ? 'letter' : paperSize === 'legal' ? 'legal' : 'A4'}; margin: 0; }
+                body { margin: 0; padding: 0; }
+              }
+            `}} />
+            <div className={`mx-auto box-border ${paperSize === 'letter' ? 'w-[8.5in] min-h-[11in]' : paperSize === 'legal' ? 'w-[8.5in] min-h-[14in]' : 'w-[210mm] min-h-[297mm]'}`} style={{ padding: '25mm' }}>
               <div className="text-center mb-8 pb-4 border-b-2 border-black">
                 <p className="text-sm uppercase tracking-[0.2em] font-bold">Republic of the Philippines</p>
                 <p className="text-sm uppercase tracking-[0.2em] font-bold">Province of Batangas</p>
@@ -148,12 +162,27 @@ export function SummonsGenerator({ open, onOpenChange, record }: SummonsGenerato
             </div>
           </div>
 
-          <div className="flex justify-end gap-3 print:hidden">
-            <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-            <Button onClick={handlePrint} disabled={!hearingDate || !hearingTime} className="gap-2 bg-primary">
-              <Printer className="h-4 w-4" />
-              {isGenerating ? "Preparing..." : "Print Summons"}
-            </Button>
+          <div className="flex justify-between items-center gap-3 print:hidden border-t border-border mt-2 pt-4">
+            <div className="flex items-center space-x-2">
+              <Label className="text-xs uppercase font-bold tracking-wider whitespace-nowrap text-muted-foreground hidden sm:block">Paper Size</Label>
+              <Select value={paperSize} onValueChange={setPaperSize}>
+                <SelectTrigger className="w-[100px] h-8 text-xs bg-white border-border">
+                  <SelectValue placeholder="Size" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="a4" className="text-xs">A4</SelectItem>
+                  <SelectItem value="letter" className="text-xs">Letter</SelectItem>
+                  <SelectItem value="legal" className="text-xs">Legal</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex justify-end gap-3">
+              <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+              <Button onClick={handlePrint} disabled={!hearingDate || !hearingTime} className="gap-2 bg-primary">
+                <Printer className="h-4 w-4" />
+                {isGenerating ? "Preparing..." : "Print Summons"}
+              </Button>
+            </div>
           </div>
         </div>
       </DialogContent>

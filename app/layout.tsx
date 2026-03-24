@@ -1,19 +1,8 @@
 import type { Metadata } from 'next'
-import { Poppins, Montserrat, Inter } from 'next/font/google'
+import { Inter } from 'next/font/google'
 import { SessionTimeout } from "@/components/auth/session-timeout"
 import { Analytics } from '@vercel/analytics/next'
 import './globals.css'
-
-const poppins = Poppins({ 
-  subsets: ["latin"], 
-  weight: ["400", "700", "900"],
-  variable: '--font-poppins' 
-});
-
-const montserrat = Montserrat({ 
-  subsets: ["latin"], 
-  variable: '--font-montserrat' 
-});
 
 const inter = Inter({ 
   subsets: ["latin"], 
@@ -58,7 +47,7 @@ export default function RootLayout({
           crossOrigin=""
         />
       </head>
-      <body className={`${inter.variable} ${poppins.variable} ${montserrat.variable} font-sans antialiased bg-background text-foreground overflow-x-hidden`}>
+      <body className={`${inter.variable} font-sans antialiased bg-background text-foreground overflow-x-hidden`}>
         {/* Decorative Fluid Accents */}
         <div className="fixed inset-0 pointer-events-none -z-10 overflow-hidden">
           <svg className="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] text-primary opacity-[0.03]" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">

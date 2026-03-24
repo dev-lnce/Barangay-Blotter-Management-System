@@ -15,7 +15,13 @@ interface UserProfile {
   role: string
 }
 
-export function TopHeader() {
+interface PageHeaderProps {
+  title: string
+  subtitle?: string
+  showSearch?: boolean
+}
+
+export function PageHeader({ title, subtitle, showSearch = true }: PageHeaderProps) {
   const [profile, setProfile] = useState<UserProfile | null>(null)
 
   useEffect(() => {
@@ -47,26 +53,29 @@ export function TopHeader() {
   const roleName = profile?.role || 'Barangay Admin'
 
   return (
-    <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-border bg-background/60 backdrop-blur-md px-6 shadow-sm">
+    <header className="sticky top-0 z-40 flex h-14 items-center justify-between border-b border-black/[0.06] bg-white/80 backdrop-blur-md px-6">
       {/* Left: page title */}
       <div>
-        <h1 className="text-sm font-bold text-foreground font-sans tracking-tight uppercase">Dashboard Overview</h1>
-        <p className="text-[10px] text-muted-foreground font-sans font-medium uppercase tracking-wider">Barangay Banay-banay — March 2026</p>
+        <h1 className="text-sm font-bold text-[#191c1e] font-sans">{title}</h1>
+        {subtitle && (
+          <p className="text-[10px] text-[#44474e] uppercase tracking-[0.15em] mt-0.5">{subtitle}</p>
+        )}
       </div>
 
-      {/* Right: search + bell + avatar */}
+      {/* Center & Right container */}
       <div className="flex items-center gap-3">
         {/* Search */}
-        <div className="relative hidden md:block">
-          <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="Search incidents, IDs..."
-            className="w-56 pl-9 h-9 text-sm bg-muted/50 border-border rounded-lg font-sans"
-          />
-        </div>
+        {showSearch && (
+          <div className="relative hidden md:block mr-2">
+            <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Search incidents, IDs..."
+              className="w-64 pl-9 pr-4 h-9 text-sm bg-[#f2f4f6] border-0 rounded-lg focus-visible:ring-2 focus-visible:ring-[#002576]/20 font-sans"
+            />
+          </div>
+        )}
 
-
-
+        {/* Bell */}
         <NotificationCenter />
 
         {/* Logout */}
@@ -77,15 +86,15 @@ export function TopHeader() {
           </Button>
         </form>
 
-        {/* Profile */}
-        <div className="flex items-center gap-2.5 pl-1 border-l border-border">
+        {/* Divider & Profile */}
+        <div className="flex items-center gap-2.5 pl-3 border-l border-black/[0.06]">
           <Avatar className="h-8 w-8">
             <AvatarImage src="" alt={profile?.full_name || 'Admin user'} />
-            <AvatarFallback className="bg-primary text-primary-foreground text-xs font-semibold">{initials}</AvatarFallback>
+            <AvatarFallback className="bg-[#002576] text-white text-xs font-semibold">{initials}</AvatarFallback>
           </Avatar>
           <div className="hidden md:block">
-            <p className="text-xs font-semibold text-foreground font-sans leading-none">{displayName}</p>
-            <p className="text-[10px] text-muted-foreground font-sans mt-0.5">{roleName}</p>
+            <p className="text-xs font-semibold text-[#191c1e] font-sans leading-none">{displayName}</p>
+            <p className="text-[10px] text-[#44474e] font-sans mt-0.5">{roleName}</p>
           </div>
         </div>
       </div>

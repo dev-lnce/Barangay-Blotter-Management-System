@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Sidebar } from "@/components/dashboard/sidebar"
-import { TopHeader } from "@/components/dashboard/top-header"
+import { PageHeader } from "@/components/dashboard/page-header"
 import { CitizenProfileCard } from "@/components/users/citizen-profile-card"
 import { supabase } from "@/lib/supabase"
 import { Input } from "@/components/ui/input"
@@ -89,7 +89,7 @@ export default function CitizensPage() {
     <div className="flex min-h-screen bg-background">
       <Sidebar />
       <div className="flex flex-1 flex-col pl-60">
-        <TopHeader />
+        <PageHeader title="Citizen Profiles" subtitle="Mga Tao Database" />
         <main className="flex-1 p-8 space-y-8">
           {/* Header */}
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-border pb-6">

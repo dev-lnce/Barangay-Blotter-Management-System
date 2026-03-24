@@ -1,5 +1,5 @@
 import { Sidebar } from "@/components/dashboard/sidebar"
-import { IncidentsHeader } from "@/components/incidents/incidents-header"
+import { PageHeader } from "@/components/dashboard/page-header"
 import { BlotterTable } from "@/components/incidents/blotter-table"
 
 export default function IncidentsPage() {
@@ -11,7 +11,7 @@ export default function IncidentsPage() {
       {/* Main content — offset for sidebar width */}
       <div className="flex flex-1 flex-col pl-60">
         {/* Sticky Top Header */}
-        <IncidentsHeader />
+        <PageHeader title="Incident Records" subtitle="Blotter Management" />
 
         {/* Scrollable main area */}
         <main className="flex-1 overflow-y-auto bg-muted/40 p-6">

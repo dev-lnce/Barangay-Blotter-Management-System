@@ -1,5 +1,5 @@
 import { Sidebar } from "@/components/dashboard/sidebar"
-import { TopHeader } from "@/components/dashboard/top-header"
+import { PageHeader } from "@/components/dashboard/page-header"
 import { AuditLogTable } from "@/components/audit/audit-log-table"
 
 export default function AuditPage() {
@@ -7,7 +7,7 @@ export default function AuditPage() {
     <div className="flex min-h-screen bg-background">
       <Sidebar />
       <div className="flex-1 pl-60 font-sans">
-        <TopHeader />
+        <PageHeader title="Audit Log" subtitle="System Activity Records" />
         <main className="p-8 space-y-8">
           {/* Page Header */}
           <div className="border-b border-border pb-6">

@@ -300,7 +300,7 @@ export function BlotterTable() {
                 <Download className="h-4 w-4" />
                 Export
               </Button>
-              <Button onClick={() => setSheetOpen(true)} className="gap-2 w-full sm:w-auto bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm">
+              <Button onClick={() => setSheetOpen(true)} variant="gold" className="gap-2 w-full sm:w-auto shadow-sm">
                 <Plus className="h-4 w-4" />
                 Talaan
               </Button>
@@ -379,6 +379,13 @@ export function BlotterTable() {
                   severityColor = "bg-amber-500"
                 }
 
+                let borderColor = "border-l-[#22c55e]"
+                if (["Physical Assault", "Theft", "Fraud", "Domestic Dispute"].includes(type)) {
+                  borderColor = "border-l-[#ef4444]"
+                } else if (["Property Damage", "Trespassing", "Verbal Abuse"].includes(type)) {
+                  borderColor = "border-l-[#f59e0b]"
+                }
+
                 // Determine Days Open
                 const isResolved = record.status === "Resolved"
                 const start = new Date(record.dateReported).getTime()
@@ -386,32 +393,26 @@ export function BlotterTable() {
                 const diffDays = Math.max(0, Math.floor((now - start) / (1000 * 3600 * 24)))
                 const daysPercent = isResolved ? 100 : Math.min((diffDays / 30) * 100, 100)
                 const daysLabel = isResolved ? "RESOLVED" : `${diffDays} ARAW`
-                const daysColor = isResolved ? "bg-muted-foreground/40" : (diffDays > 14 ? "bg-[oklch(0.577_0.245_27.325)]" : diffDays > 7 ? "bg-amber-500" : "bg-primary")
+                const daysColor = isResolved ? "bg-muted-foreground/40" : (diffDays > 14 ? "bg-[#ef4444]" : diffDays > 7 ? "bg-[#f59e0b]" : "bg-[#002576]")
 
                 // Status Badge
                 const statusText = isResolved ? "RESOLVED" : (diffDays > 14 ? "ESCALATED" : "PENDING")
                 const badgeStyle = isResolved 
-                  ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" 
-                  : statusText === "ESCALATED"
-                  ? "bg-[oklch(0.577_0.245_27.325)]/10 text-[oklch(0.577_0.245_27.325)] border-[oklch(0.577_0.245_27.325)]/20"
-                  : "bg-amber-500/10 text-amber-600 border-amber-500/20"
+                  ? "bg-emerald-50 text-emerald-700" 
+                  : "bg-[#002576]/10 text-[#002576]"
 
                 return (
-                  <Card key={record.id} className="relative bg-white rounded-xl shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] hover:shadow-lg transition-all duration-300 hover:border-primary/50 overflow-hidden flex flex-col group p-0 border border-border">
-                    <div className="absolute top-4 left-4 z-10">
-                      <span className={cn("inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-[0.1em] backdrop-blur-md border", badgeStyle)}>
-                        {statusText}
-                      </span>
-                    </div>
-
-                    <div className="h-4 bg-gradient-to-r from-primary to-primary/60 shrink-0" />
+                  <Card key={record.id} className={cn("relative bg-white rounded-xl shadow-[0_1px_3px_rgba(25,28,30,0.08),0_8px_24px_rgba(25,28,30,0.04)] hover:shadow-lg transition-all duration-300 overflow-hidden flex flex-col group p-0 border border-border border-l-4", borderColor)}>
 
                     <div className="p-4 flex flex-col flex-1">
                       <div className="mb-4">
                         <div className="flex items-start justify-between gap-2 mb-1">
                            <h3 className="font-sans text-lg font-bold text-foreground leading-tight line-clamp-1">{record.incidentType || "Incident"}</h3>
-                           <p className="font-mono text-[9px] text-muted-foreground tracking-widest uppercase shrink-0 mt-1">{record.id}</p>
+                           <span className={cn("inline-flex items-center px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-[0.1em]", badgeStyle)}>
+                             {statusText}
+                           </span>
                         </div>
+                        <p className="font-mono text-[9px] text-muted-foreground tracking-widest uppercase shrink-0 mt-1 mb-1">{record.id}</p>
                         <p className="text-[11px] text-muted-foreground line-clamp-1">{record.complainant} • {record.location}</p>
                       </div>
 

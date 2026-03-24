@@ -41,7 +41,7 @@ export function CitizenProfileCard({
   const isHighRisk = respondentCount > 2 || isPoi
 
   return (
-    <Card className="group relative overflow-hidden border border-border/50 bg-white transition-all hover:shadow-md hover:border-primary/30">
+    <Card className="group relative overflow-hidden border-none shadow-ambient bg-white transition-all hover:shadow-ambient-lg">
       {/* Risk Indicator Strip */}
       {isHighRisk && (
         <div className="absolute top-0 left-0 w-full h-1 bg-destructive/60" />
@@ -51,8 +51,8 @@ export function CitizenProfileCard({
         <div className="flex items-start justify-between mb-3">
           <div className="flex items-center gap-3">
             <div className={cn(
-              "flex h-10 w-10 items-center justify-center rounded-full text-xs font-black font-sans shadow-inner border border-border/40",
-              isHighRisk ? "bg-destructive/5 text-destructive" : "bg-primary/5 text-primary"
+              "flex h-10 w-10 items-center justify-center rounded-full text-xs font-black font-sans shadow-sm",
+              isHighRisk ? "bg-red-50 text-destructive" : "bg-[#002576]/5 text-[#002576]"
             )}>
               {initials}
             </div>
@@ -80,7 +80,7 @@ export function CitizenProfileCard({
         </div>
 
         <div className="grid grid-cols-2 gap-2 mb-3">
-          <div className="bg-muted/30 rounded-lg p-2.5 border border-border/30">
+          <div className="bg-[#f7f9fb] rounded-lg p-2.5 border-none">
             <p className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest mb-0.5">Nagrereklamo</p>
             <div className="flex items-baseline gap-1">
               <span className="text-lg font-sans font-black text-foreground">{complainantCount}</span>
@@ -88,8 +88,8 @@ export function CitizenProfileCard({
             </div>
           </div>
           <div className={cn(
-            "rounded-lg p-2.5 border",
-            respondentCount > 0 ? "bg-destructive/5 border-destructive/10" : "bg-muted/30 border-border/30"
+            "rounded-lg p-2.5 border-none",
+            respondentCount > 0 ? "bg-red-50" : "bg-[#f7f9fb]"
           )}>
             <p className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest mb-0.5">Inirereklamo</p>
             <div className="flex items-baseline gap-1">
@@ -130,7 +130,7 @@ export function CitizenProfileCard({
         <Button 
           variant="outline" 
           size="sm" 
-          className="w-full mt-3 h-7 text-[9px] uppercase font-black tracking-widest gap-2 bg-transparent border-border/60 hover:bg-primary hover:text-primary-foreground group-hover:border-primary/20"
+          className="w-full mt-3 h-7 text-[9px] uppercase font-black tracking-widest gap-2 bg-transparent border-none text-[#002576] hover:bg-[#f7f9fb] hover:text-[#002576]"
           onClick={onViewDetails}
         >
           Full Profile

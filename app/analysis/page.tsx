@@ -4,7 +4,7 @@ import { useRef, useState } from "react"
 import { toPng } from "html-to-image"
 import { jsPDF } from "jspdf"
 import { Sidebar } from "@/components/dashboard/sidebar"
-import { TopHeader } from "@/components/dashboard/top-header"
+import { PageHeader } from "@/components/dashboard/page-header"
 import { MonthlyTrendsChart } from "@/components/analytics/monthly-trends-chart"
 import { ResolutionDurationChart } from "@/components/analytics/resolution-duration-chart"
 import { ResolutionStatusDonut } from "@/components/analytics/resolution-status-donut"
@@ -82,7 +82,7 @@ export default function AnalysisPage() {
     <div className="flex min-h-screen bg-background">
       <Sidebar />
       <div className="flex flex-1 flex-col pl-60">
-        <TopHeader />
+        <PageHeader title="Analytics & Reports" subtitle="Data Insights" />
         <main className="flex-1 overflow-y-auto px-6 py-6">
           <div className="mb-6 flex items-center justify-between">
             <div>
@@ -93,7 +93,7 @@ export default function AnalysisPage() {
             </div>
             <div className="flex items-center gap-2">
               <DILGReportDialog />
-              <Button className="gap-2 font-sans" onClick={handleExportPDF} disabled={isExporting}>
+              <Button variant="gold" className="gap-2 font-black tracking-widest text-[9px] uppercase" onClick={handleExportPDF} disabled={isExporting}>
                 {isExporting ? <><Loader2 className="h-4 w-4 animate-spin" /> Exporting…</> : <><FileDown className="h-4 w-4" /> Export Report (PDF)</>}
               </Button>
             </div>

@@ -123,20 +123,20 @@ export function RecentIncidentsTable() {
       <CardContent className="pt-0 overflow-x-auto flex-1">
         <Table>
           <TableHeader>
-            <TableRow className="hover:bg-transparent border-none bg-primary/5">
-              <TableHead className="text-[10px] font-extrabold text-primary/80 uppercase tracking-[0.15em] font-sans whitespace-nowrap h-10 px-4 first:rounded-tl-lg last:rounded-tr-lg">
+            <TableRow className="hover:bg-transparent border-none bg-[#f2f4f6]">
+              <TableHead className="text-[9px] font-black text-[#44474e] uppercase tracking-[0.12em] font-sans whitespace-nowrap h-10 px-4 first:rounded-tl-lg last:rounded-tr-lg">
                 Incident ID
               </TableHead>
-              <TableHead className="text-[10px] font-extrabold text-primary/80 uppercase tracking-[0.15em] font-sans whitespace-nowrap h-10 px-4">
+              <TableHead className="text-[9px] font-black text-[#44474e] uppercase tracking-[0.12em] font-sans whitespace-nowrap h-10 px-4">
                 Date
               </TableHead>
-              <TableHead className="text-[10px] font-extrabold text-primary/80 uppercase tracking-[0.15em] font-sans whitespace-nowrap h-10 px-4">
+              <TableHead className="text-[9px] font-black text-[#44474e] uppercase tracking-[0.12em] font-sans whitespace-nowrap h-10 px-4">
                 Category
               </TableHead>
-              <TableHead className="text-[10px] font-extrabold text-primary/80 uppercase tracking-[0.15em] font-sans whitespace-nowrap h-10 px-4">
+              <TableHead className="text-[9px] font-black text-[#44474e] uppercase tracking-[0.12em] font-sans whitespace-nowrap h-10 px-4">
                 Kalubhaan
               </TableHead>
-              <TableHead className="text-[10px] font-extrabold text-primary/80 uppercase tracking-[0.15em] font-sans whitespace-nowrap h-10 px-4 first:rounded-tl-lg last:rounded-tr-lg">
+              <TableHead className="text-[9px] font-black text-[#44474e] uppercase tracking-[0.12em] font-sans whitespace-nowrap h-10 px-4 first:rounded-tl-lg last:rounded-tr-lg">
                 Status
               </TableHead>
             </TableRow>
@@ -156,7 +156,7 @@ export function RecentIncidentsTable() {
               </TableRow>
             ) : (
               incidents.map((inc) => (
-                <TableRow key={inc.id} className="border-border hover:bg-muted/30 transition-colors">
+                <TableRow key={inc.id} className="border-b-0 even:bg-[#f7f9fb] odd:bg-white hover:bg-[#eef2ff] transition-colors">
                   <TableCell className="text-xs font-mono text-foreground font-medium py-3 whitespace-nowrap hover:text-primary transition-colors">
                     <Link href={`/incidents/${inc.rawId}`}>{inc.id}</Link>
                   </TableCell>

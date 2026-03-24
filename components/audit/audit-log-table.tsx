@@ -368,20 +368,20 @@ export function AuditLogTable() {
         <div className="rounded-lg border border-border overflow-hidden">
           <Table>
             <TableHeader>
-              <TableRow className="bg-muted/70 hover:bg-muted/70">
-                <TableHead className="font-semibold text-foreground text-[11px] uppercase tracking-wider py-2">
+              <TableRow className="hover:bg-transparent border-none bg-[#f2f4f6]">
+                <TableHead className="text-[9px] font-black text-[#44474e] uppercase tracking-[0.12em] py-2">
                   Timestamp
                 </TableHead>
-                <TableHead className="font-semibold text-foreground text-[11px] uppercase tracking-wider py-2">
+                <TableHead className="text-[9px] font-black text-[#44474e] uppercase tracking-[0.12em] py-2">
                   User
                 </TableHead>
-                <TableHead className="font-semibold text-foreground text-[11px] uppercase tracking-wider py-2">
+                <TableHead className="text-[9px] font-black text-[#44474e] uppercase tracking-[0.12em] py-2">
                   Action
                 </TableHead>
-                <TableHead className="font-semibold text-foreground text-[11px] uppercase tracking-wider py-2">
+                <TableHead className="text-[9px] font-black text-[#44474e] uppercase tracking-[0.12em] py-2">
                   IP Address
                 </TableHead>
-                <TableHead className="font-semibold text-foreground text-[11px] uppercase tracking-wider py-2 text-right">
+                <TableHead className="text-[9px] font-black text-[#44474e] uppercase tracking-[0.12em] py-2 text-right">
                   Status
                 </TableHead>
               </TableRow>
@@ -410,7 +410,7 @@ export function AuditLogTable() {
                   <TableRow
                     key={log.id}
                     className={cn(
-                      "hover:bg-muted/30 transition-colors",
+                      "border-b-0 even:bg-[#f7f9fb] odd:bg-white hover:bg-[#eef2ff] transition-colors",
                       isDestructiveAction(log.action, log.status) &&
                         "bg-red-50/50 hover:bg-red-50/70"
                     )}

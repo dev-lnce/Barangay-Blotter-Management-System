@@ -1,5 +1,5 @@
 import { Sidebar } from "@/components/dashboard/sidebar"
-import { TopHeader } from "@/components/dashboard/top-header"
+import { PageHeader } from "@/components/dashboard/page-header"
 import { HeroBanner } from "@/components/dashboard/hero-banner"
 import { KpiCards } from "@/components/dashboard/kpi-cards"
 import { ReportsLineChart } from "@/components/dashboard/reports-line-chart"
@@ -38,7 +38,7 @@ export default function DashboardPage() {
       {/* Main content — offset for sidebar width */}
       <div className="flex flex-1 flex-col pl-60">
         {/* Sticky Top Header */}
-        <TopHeader />
+        <PageHeader title="Dashboard Overview" subtitle="Brgy. Banay-Banay 2nd — March 2026" />
 
         {/* Scrollable main area */}
         <main className="flex-1 overflow-y-auto bg-background p-6 md:p-8 space-y-8">

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { Sidebar } from "@/components/dashboard/sidebar"
-import { TopHeader } from "@/components/dashboard/top-header"
+import { PageHeader } from "@/components/dashboard/page-header"
 import { supabase } from "@/lib/supabase"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -127,7 +127,7 @@ export default function IncidentDetailsPage() {
     <div className="flex min-h-screen bg-background font-sans">
       <Sidebar />
       <div className="flex-1 pl-60">
-        <TopHeader />
+        <PageHeader title="Incident Details" subtitle="Blotter Management" />
         <main className="p-8 space-y-8 animate-in fade-in duration-500">
           {/* Back Button */}
           <Button 
